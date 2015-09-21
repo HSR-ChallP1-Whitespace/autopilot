@@ -1,0 +1,34 @@
+<!doctype html>
+<html lang="en" ng-app="simulatorApp">
+<head>
+  <meta charset="utf-8">
+  <title>Carrera Simulator</title>
+  <link rel="stylesheet" href="bower_components/bootstrap/dist/css/bootstrap.css">
+  <link rel="stylesheet" href="css/app.css">
+
+<!-- Bower dependencies -->
+  <script src="bower_components/jquery/dist/jquery.min.js"></script>
+  <script src="bower_components/angular/angular.js"></script>
+  <script src="bower_components/angular-bootstrap/ui-bootstrap.js"></script>
+  <script src="bower_components/angular-resource/angular-resource.js"></script>
+  <script src="bower_components/angular-route/angular-route.js"></script>
+  <script src="bower_components/sockjs/sockjs.js"></script>
+  <script src="bower_components/stomp-websocket/lib/stomp.js"></script>
+
+
+<!-- Module dependencies -->
+  <script src="module.js"></script>
+  <script src="commons/module.js"></script>
+  <script src="commons/angular-stomp.js"></script>
+  <script src="commons/carreraRest.js"></script>
+  <script src="commons/stomp.js"></script>
+
+  <script src="simulator/module.js"></script>
+  <script src="simulator/simulatorCtrl.js"></script>
+</head>
+<body>
+
+   <div ng-view></div>
+
+</body>
+</html>

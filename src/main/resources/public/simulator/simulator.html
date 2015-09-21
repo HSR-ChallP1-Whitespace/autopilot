@@ -1,0 +1,100 @@
+<div class="simulator-header top15">
+    <div class="row">
+
+        <div class="col-md-1">
+        </div>
+        <div class="col-md-3">
+            <span>Simulator</span>
+        </div>
+        <div class="col-md-4">
+            <span>Team {{currentTeam}} </span>
+        </div>
+        <div class="col-md-3">
+            <span>Round {{roundNumber}} </span>
+        </div>
+        <div class="col-md-1">
+        </div>
+    </div>
+</div>
+
+<div class="jumbotron simulator-center">
+    <div class="container">
+
+        <div class="row">
+            <div class="col-md-12 padding-md">
+
+                <button class="btn btn-success" ng-click="startClock()"
+                        ng-show="!simulatorOn()" ng-disabled="!connected">Start Clock
+                </button>
+
+                <button class="btn btn-info" ng-click="stopClock()"
+                        ng-show="simulatorOn()" ng-disabled="!connected">Stop Clock
+                </button>
+
+                <button class="btn btn-info" ng-click="startRace()"
+                        ng-disabled="!connected">Start Race
+                </button>
+
+                <button class="btn btn-info" ng-click="stopRace()"
+                        ng-disabled="!connected">Stop Race
+                </button>
+
+                <button class="btn btn-primary" ng-click="powerup()"
+                        ng-show="connected">Power up
+                </button>
+
+                <button class="btn btn-primary" ng-click="powerdown()"
+                        ng-show="connected">Power down
+                </button>
+
+                <button class="btn btn-warning" ng-click="reset()"
+                        ng-show="connected">Reset
+                </button>
+
+                <select id="size" class="btn-primary" ng-model="sizeOption" ng-change="selectCanvas()"
+                        ng-options="option.description for option in sizeOptions"></select>
+
+                <select id="design" class="btn-primary" ng-model="selectedDesign" ng-change="selectDesign()"
+                        ng-options="option for option in availableDesigns"></select>
+            </div>
+        </div>
+
+        <div class="row top10">
+            <div class="col-md-2">Power</div>
+            <div class="col-md-1"><strong>{{recentNews.currentPower | number : 3}}</strong></div>
+            <div class="col-md-5"><canvas id="power" height="20" style="border: 2px solid #000000;"></canvas></div>
+        </div>
+
+        <div class="row">
+            <div class="col-md-2">Velocity</div>
+            <div class="col-md-1"><strong>{{recentNews.velocity | number : 3}}</strong></div>
+            <div class="col-md-5"><canvas id="velocity" height="20" style="border: 2px solid #000000;"></canvas></div>
+        </div>
+
+        <div class="row">
+            <div class="col-md-2">
+            <select id="displaySpec" class="btn-primary" ng-model="selectedSpec" ng-change="selectSpecification()"
+                    ng-options="spec.description for spec in displaySpecifications"></select>
+                </div>
+            <div class="col-md-1"><strong>{{recentSensorValue()}}</strong></div>
+            <div class="col-md-5"><canvas id="sensorValue" height="20" style="border: 2px solid #000000;"></canvas></div>
+        </div>
+
+        <div class="row">
+            <div class="col-md-12">
+                <canvas id="racetrack" width="{{canvasWidth}}" height="{{canvasHeight}}" style="border: 2px solid #000000"></canvas>
+            </div>
+        </div>
+
+        <span>Last STOMP Tick received: {{recentTime | date: 'HH:mm:ss.sss'}}</span>
+    </div>
+</div>
+
+<div ng-hide="isSimulatorRunning">
+    <div class="panel-body">
+        <div class="col-md-12">
+            <div class="alert alert-error" ng-hide="doesExist" role="alert">Simulator '{{raceTrackId}}' does not exist!</div>
+            <div class="alert alert-warning" ng-show="doesExist" role="alert">Simulator '{{raceTrackId}}' is not running!</div>
+        </div>
+    </div>
+</div>
