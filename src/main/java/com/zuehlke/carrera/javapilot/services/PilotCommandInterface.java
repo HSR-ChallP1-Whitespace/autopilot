@@ -8,7 +8,7 @@ import com.zuehlke.carrera.relayapi.messages.RaceStopMessage;
  */
 public interface PilotCommandInterface {
 
-    public void send ( RaceStartMessage message );
+	public void send(RaceStartMessage message);
 
-    public void send ( RaceStopMessage message );
+	public void send(RaceStopMessage message);
 }

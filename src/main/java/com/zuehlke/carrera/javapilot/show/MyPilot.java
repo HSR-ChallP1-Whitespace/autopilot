@@ -7,23 +7,22 @@ import org.springframework.beans.factory.annotation.Autowired;
  */
 public class MyPilot {
 
-    private PowerApi powerApi;
+	private PowerApi powerApi;
 
-    @Autowired
-    public MyPilot ( PowerApi api ) {
-        this.powerApi = api;
-    }
+	@Autowired
+	public MyPilot(PowerApi api) {
+		this.powerApi = api;
+	}
 
-    public void input ( RaceEvent event ) {
+	public void input(RaceEvent event) {
 
-        // consider the new event
-        int power = consider ( event );
+		// consider the new event
+		int power = consider(event);
 
-        powerApi.setPower ( power );
-    }
+		powerApi.setPower(power);
+	}
 
-
-    private synchronized  int consider(RaceEvent event) {
-        return 0;
-    }
+	private synchronized int consider(RaceEvent event) {
+		return 0;
+	}
 }

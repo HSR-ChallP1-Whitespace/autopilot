@@ -5,39 +5,42 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
 /**
  * Pilot Properties loaded from /resources/application.yml
  */
-@ConfigurationProperties(prefix="javapilot")
+@ConfigurationProperties(prefix = "javapilot")
 public class PilotProperties {
-    private String relayUrl;
-    private String name;
-    private String accessCode;
-    private String rabbitUrl;
+	private String relayUrl;
+	private String name;
+	private String accessCode;
+	private String rabbitUrl;
 
-    public String getRelayUrl() {
-        return relayUrl;
-    }
-    public String getName() {
-        return name;
-    }
+	public String getRelayUrl() {
+		return relayUrl;
+	}
 
-    public void setRelayUrl(String relayUrl) {
-        this.relayUrl = relayUrl;
-    }
-    public void setName(String name) {
-        this.name = name;
-    }
+	public String getName() {
+		return name;
+	}
 
-    public String getAccessCode() {
-        return accessCode;
-    }
-    public void setAccessCode(String accessCode) {
-        this.accessCode = accessCode;
-    }
+	public void setRelayUrl(String relayUrl) {
+		this.relayUrl = relayUrl;
+	}
 
-    public String getRabbitUrl() {
-        return rabbitUrl;
-    }
+	public void setName(String name) {
+		this.name = name;
+	}
 
-    public void setRabbitUrl(String rabbitUrl) {
-        this.rabbitUrl = rabbitUrl;
-    }
+	public String getAccessCode() {
+		return accessCode;
+	}
+
+	public void setAccessCode(String accessCode) {
+		this.accessCode = accessCode;
+	}
+
+	public String getRabbitUrl() {
+		return rabbitUrl;
+	}
+
+	public void setRabbitUrl(String rabbitUrl) {
+		this.rabbitUrl = rabbitUrl;
+	}
 }
