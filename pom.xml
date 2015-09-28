@@ -84,7 +84,6 @@
 		<dependency>
 			<groupId>org.springframework</groupId>
 			<artifactId>spring-messaging</artifactId>
-			<version>4.1.2.RELEASE</version>
 		</dependency>
 
 		<!-- AKKA -->
@@ -103,7 +102,6 @@
 		<dependency>
 			<groupId>joda-time</groupId>
 			<artifactId>joda-time</artifactId>
-			<version>2.2</version>
 		</dependency>
 
 		<dependency>
