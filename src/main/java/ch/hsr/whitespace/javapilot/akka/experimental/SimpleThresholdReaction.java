@@ -1,4 +1,4 @@
-package com.zuehlke.carrera.javapilot.akka.experimental;
+package ch.hsr.whitespace.javapilot.akka.experimental;
 
 import com.zuehlke.carrera.javapilot.akka.PowerAction;
 import com.zuehlke.carrera.relayapi.messages.SensorEvent;

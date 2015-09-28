@@ -1,4 +1,4 @@
-package com.zuehlke.carrera.javapilot.config;
+package ch.hsr.whitespace.javapilot.config;
 
 import org.springframework.context.annotation.Configuration;
 import org.springframework.messaging.simp.config.MessageBrokerRegistry;

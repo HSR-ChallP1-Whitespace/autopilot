@@ -1,4 +1,4 @@
-package com.zuehlke.carrera.javapilot.akka.experimental;
+package ch.hsr.whitespace.javapilot.akka.experimental;
 
 import akka.actor.ActorRef;
 import akka.actor.Props;

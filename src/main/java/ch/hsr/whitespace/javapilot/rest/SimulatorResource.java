@@ -1,4 +1,4 @@
-package com.zuehlke.carrera.javapilot.rest;
+package ch.hsr.whitespace.javapilot.rest;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -7,10 +7,11 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.zuehlke.carrera.javapilot.services.SimulatorService;
 import com.zuehlke.carrera.relayapi.messages.RaceStartMessage;
 import com.zuehlke.carrera.relayapi.messages.RaceStopMessage;
 import com.zuehlke.carrera.simulator.model.racetrack.TrackInfo;
+
+import ch.hsr.whitespace.javapilot.services.SimulatorService;
 
 @RestController
 @RequestMapping("/api/simulator")

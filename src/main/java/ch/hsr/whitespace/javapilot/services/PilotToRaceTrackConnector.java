@@ -1,5 +1,6 @@
-package com.zuehlke.carrera.javapilot.services;
+package ch.hsr.whitespace.javapilot.services;
 
+import com.zuehlke.carrera.javapilot.services.PilotToRelayConnection;
 import com.zuehlke.carrera.relayapi.messages.PowerControl;
 import com.zuehlke.carrera.simulator.model.RaceTrackSimulatorSystem;
 

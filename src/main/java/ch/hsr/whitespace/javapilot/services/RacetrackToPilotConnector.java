@@ -1,4 +1,4 @@
-package com.zuehlke.carrera.javapilot.services;
+package ch.hsr.whitespace.javapilot.services;
 
 import com.zuehlke.carrera.relayapi.messages.PenaltyMessage;
 import com.zuehlke.carrera.relayapi.messages.RaceStartMessage;

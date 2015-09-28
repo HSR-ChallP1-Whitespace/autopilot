@@ -1,4 +1,4 @@
-package com.zuehlke.carrera.javapilot.config;
+package ch.hsr.whitespace.javapilot.config;
 
 import org.springframework.boot.context.properties.ConfigurationProperties;
 

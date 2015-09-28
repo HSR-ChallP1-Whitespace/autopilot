@@ -1,4 +1,4 @@
-package com.zuehlke.carrera.javapilot.services;
+package ch.hsr.whitespace.javapilot.services;
 
 import javax.annotation.PreDestroy;
 
@@ -9,11 +9,15 @@ import org.springframework.scheduling.annotation.EnableScheduling;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
-import com.zuehlke.carrera.javapilot.akka.JavaPilotActor;
-import com.zuehlke.carrera.javapilot.config.PilotProperties;
+import com.zuehlke.carrera.javapilot.services.EndpointAnnouncement;
+import com.zuehlke.carrera.javapilot.services.EndpointService;
+import com.zuehlke.carrera.javapilot.services.PilotToRelayConnection;
+import com.zuehlke.carrera.javapilot.services.PilotToRelayStompConnection;
 
 import akka.actor.ActorRef;
 import akka.actor.ActorSystem;
+import ch.hsr.whitespace.javapilot.akka.JavaPilotActor;
+import ch.hsr.whitespace.javapilot.config.PilotProperties;
 
 /**
  * Manages the carrera pilot instance.

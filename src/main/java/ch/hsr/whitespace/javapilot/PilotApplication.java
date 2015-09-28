@@ -1,4 +1,4 @@
-package com.zuehlke.carrera.javapilot;
+package ch.hsr.whitespace.javapilot;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -34,16 +34,16 @@ import com.zuehlke.carrera.connection.RabbitConnectionFactoryTowardsPilots;
 import com.zuehlke.carrera.connection.SimulatorTowardsPilotApiImpl;
 import com.zuehlke.carrera.connection.TowardsPilotApi;
 import com.zuehlke.carrera.connection.TowardsPilotsConnection;
-import com.zuehlke.carrera.javapilot.config.PilotProperties;
-import com.zuehlke.carrera.javapilot.services.PilotService;
 import com.zuehlke.carrera.javapilot.services.PilotToRelayConnection;
-import com.zuehlke.carrera.javapilot.services.SimulatorService;
 import com.zuehlke.carrera.relayapi.messages.TrainingRequest;
 import com.zuehlke.carrera.relayapi.messages.TrainingResponse;
 import com.zuehlke.carrera.simulator.config.SimulatorProperties;
 import com.zuehlke.carrera.simulator.model.RaceTrackSimulatorSystem;
 
 import akka.actor.ActorRef;
+import ch.hsr.whitespace.javapilot.config.PilotProperties;
+import ch.hsr.whitespace.javapilot.services.PilotService;
+import ch.hsr.whitespace.javapilot.services.SimulatorService;
 
 @Configuration
 @ComponentScan

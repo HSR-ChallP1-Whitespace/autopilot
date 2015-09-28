@@ -1,11 +1,13 @@
-package com.zuehlke.carrera.javapilot.akka;
+package ch.hsr.whitespace.javapilot.akka;
 
 import akka.actor.ActorRef;
 import akka.actor.Props;
 import akka.actor.UntypedActor;
 import akka.japi.Creator;
-import com.zuehlke.carrera.javapilot.akka.experimental.ThresholdConfiguration;
-import com.zuehlke.carrera.javapilot.config.PilotProperties;
+import ch.hsr.whitespace.javapilot.akka.experimental.ThresholdConfiguration;
+import ch.hsr.whitespace.javapilot.config.PilotProperties;
+
+import com.zuehlke.carrera.javapilot.akka.PowerAction;
 import com.zuehlke.carrera.javapilot.services.EndpointAnnouncement;
 import com.zuehlke.carrera.javapilot.services.PilotToRelayConnection;
 import com.zuehlke.carrera.relayapi.messages.*;

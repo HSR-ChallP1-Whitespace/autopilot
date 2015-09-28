@@ -1,12 +1,11 @@
-package com.zuehlke.carrera.javapilot.akka;
+package ch.hsr.whitespace.javapilot.akka;
 
 import java.util.HashMap;
 import java.util.Map;
 
-import com.zuehlke.carrera.javapilot.akka.experimental.PowerUpUntilPenalty;
-
 import akka.actor.ActorRef;
 import akka.actor.ActorSystem;
+import ch.hsr.whitespace.javapilot.akka.experimental.PowerUpUntilPenalty;
 
 /**
  * creates the complete topology and provides a Map of well-defined entry-points

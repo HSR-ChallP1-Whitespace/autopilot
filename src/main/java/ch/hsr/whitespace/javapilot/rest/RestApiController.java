@@ -1,10 +1,10 @@
-package com.zuehlke.carrera.javapilot.rest;
+package ch.hsr.whitespace.javapilot.rest;
 
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.zuehlke.carrera.javapilot.services.PilotService;
+import ch.hsr.whitespace.javapilot.services.PilotService;
 
 @RestController
 @RequestMapping("/api/")
