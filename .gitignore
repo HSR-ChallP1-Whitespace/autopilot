@@ -1,4 +1,11 @@
 *.class
+/target
+.settings
+.classpath
+.factorypath
+.project
+/Servers
+/.metadata
 
 # Mobile Tools for Java (J2ME)
 .mtj.tmp/
