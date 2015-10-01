@@ -133,6 +133,7 @@ public class SimulatorService {
 	public TrackInfo selectDesign(String trackDesign) {
 		// will return the trackdesign and discard it, since we need the
 		// complete info.
+		raceTrackSimulatorSystem.selectDesign(trackDesign);
 		TrackInfo trackInfo = getTrackInfo();
 		return trackInfo;
 	}
