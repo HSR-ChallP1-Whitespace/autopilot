@@ -1,5 +1,9 @@
-# WhiteSpace Autopilot
+# HSR Challenge Project: 'WhiteSpace' Autopilot
 
-This is the Starter Kit for all participants who want to develop their solution based on a Spring-boot Akka architecture.
+This is the source code repository for our autopilot we implement for the Challenge Project 1 ([ChallP1](http://studien.hsr.ch/allModules/22834_M_ChallP1.html)) at the [HSR](http://www.hsr.ch).
+Find more information about the project and our LAB-Log under [http://hsr-challp1-whitespace.github.io/](http://hsr-challp1-whitespace.github.io/)
 
-If you want to use a different technology, this starterkit still provides you with a race track simulator that allows you to verify your network protocol implementation and a provides you with a training opportunity for your algorithm
+![Carrera track](http://hsr-challp1-whitespace.github.io/media/carrera.png "Autopilot Carrera Track")
+
+## Build status
+The project is built with the following jenkins job: [http://jenkins.kapfi.ch/jenkins/job/hsr-challp1-autopilot](http://jenkins.kapfi.ch/jenkins/job/hsr-challp1-autopilot/)
