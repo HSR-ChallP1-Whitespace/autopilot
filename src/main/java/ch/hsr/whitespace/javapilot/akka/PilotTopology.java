@@ -25,7 +25,7 @@ public class PilotTopology {
 	}
 
 	public Map<String, ActorRef> create() {
-		ActorRef initialProcessor = system.actorOf(WhiteSpacePilot.props(pilot, 1500));
+		ActorRef initialProcessor = system.actorOf(WhiteSpacePilot.props(pilot));
 
 		entryPoints.put(PENALTY_ENTRYPOINT, initialProcessor);
 		entryPoints.put(SENSOR_ENTRYPOINT, initialProcessor);

@@ -1,0 +1,58 @@
+<!doctype html>
+<html lang="en">
+	<head>
+		<meta charset="utf-8">
+		<title>Whitespace Data Analyzer</title>
+		
+		<script type="text/javascript" src="https://www.google.com/jsapi"></script>
+		<script type="text/javascript" src="//ajax.googleapis.com/ajax/libs/jquery/1.10.2/jquery.min.js"></script>
+		
+		<script type="text/javascript">
+			google.load('visualization', '1', {packages: ['corechart', 'line']});
+			google.setOnLoadCallback(loadData);
+			
+			var dataArray;
+			
+			function loadData() {
+				dataArray = [];
+				var jsonData = $.ajax({
+					url: '/data/gyrz',
+					dataType: 'json',
+					async: false
+				}).done(function(data) {
+					$.each(data, function() {
+						var item = [this.time, this.value, this.valueSmoothed];
+						dataArray.push(item);
+					});
+					drawChart();
+					setTimeout(loadData, 2000)
+				});
+			}
+			
+			function drawChart() {
+				var data = new google.visualization.DataTable();
+				data.addColumn('number', 'X');
+				data.addColumn('number', 'GYR-Z');
+				data.addColumn('number', 'GYR-Z-Smoothed');
+				data.addRows(dataArray);
+				
+				var options = {
+					hAxis: {
+						title: 'Time'
+					},
+					vAxis: {
+						title: 'GYR-Z'
+					},
+						backgroundColor: '#f1f8e9'
+				};
+
+				var chart = new google.visualization.LineChart(document.getElementById('chart_div'));
+				chart.draw(data, options);
+			}
+		</script>
+	</head>
+	<body>
+		<h1>Data Analyzer:</h1>
+		<div id="chart_div"></div>
+	</body>
+</html>
