@@ -1,20 +1,27 @@
 package ch.hsr.whitespace.javapilot.akka;
 
-import akka.actor.ActorRef;
-import akka.actor.Props;
-import akka.actor.UntypedActor;
-import akka.japi.Creator;
-import ch.hsr.whitespace.javapilot.akka.experimental.ThresholdConfiguration;
-import ch.hsr.whitespace.javapilot.config.PilotProperties;
+import java.util.Map;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.zuehlke.carrera.javapilot.akka.PowerAction;
 import com.zuehlke.carrera.javapilot.services.EndpointAnnouncement;
 import com.zuehlke.carrera.javapilot.services.PilotToRelayConnection;
-import com.zuehlke.carrera.relayapi.messages.*;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import com.zuehlke.carrera.relayapi.messages.PenaltyMessage;
+import com.zuehlke.carrera.relayapi.messages.PowerControl;
+import com.zuehlke.carrera.relayapi.messages.RaceStartMessage;
+import com.zuehlke.carrera.relayapi.messages.RaceStopMessage;
+import com.zuehlke.carrera.relayapi.messages.RoundTimeMessage;
+import com.zuehlke.carrera.relayapi.messages.SensorEvent;
+import com.zuehlke.carrera.relayapi.messages.VelocityMessage;
 
-import java.util.Map;
+import akka.actor.ActorRef;
+import akka.actor.Props;
+import akka.actor.UntypedActor;
+import akka.japi.Creator;
+import ch.hsr.whitespace.javapilot.akka.config.ThresholdConfiguration;
+import ch.hsr.whitespace.javapilot.config.PilotProperties;
 
 /**
  * Central actor responsible for driving the car. All data gets here and all
