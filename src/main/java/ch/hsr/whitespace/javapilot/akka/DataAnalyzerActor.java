@@ -1,5 +1,6 @@
 package ch.hsr.whitespace.javapilot.akka;
 
+import com.zuehlke.carrera.relayapi.messages.RaceStartMessage;
 import com.zuehlke.carrera.relayapi.messages.SensorEvent;
 import com.zuehlke.carrera.timeseries.FloatingHistory;
 
@@ -24,7 +25,13 @@ public class DataAnalyzerActor extends UntypedActor {
 	public void onReceive(Object message) throws Exception {
 		if (message instanceof SensorEvent) {
 			handleSensorEvent((SensorEvent) message);
+		} else if (message instanceof RaceStartMessage) {
+			handleRaceStart((RaceStartMessage) message);
 		}
+	}
+
+	private void handleRaceStart(RaceStartMessage message) {
+		GyrZGraph.instance().reset();
 	}
 
 	private void handleSensorEvent(SensorEvent event) {

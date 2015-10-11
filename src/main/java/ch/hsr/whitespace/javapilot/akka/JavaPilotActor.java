@@ -35,6 +35,7 @@ public class JavaPilotActor extends UntypedActor {
 	private ActorRef sensorEntryPoint;
 	private ActorRef velocityEntryPoint;
 	private ActorRef penaltyEntryPoint;
+	private ActorRef raceStartEntryPoint;
 
 	private PilotToRelayConnection relayConnection;
 
@@ -51,6 +52,7 @@ public class JavaPilotActor extends UntypedActor {
 		this.sensorEntryPoint = entryPoints.get(PilotTopology.SENSOR_ENTRYPOINT);
 		this.velocityEntryPoint = entryPoints.get(PilotTopology.VELOCITY_ENTRYPOINT);
 		this.penaltyEntryPoint = entryPoints.get(PilotTopology.PENALTY_ENTRYPOINT);
+		this.raceStartEntryPoint = entryPoints.get(PilotTopology.RACE_START_ENTRYPOINT);
 	}
 
 	public static Props props(PilotProperties properties) {
@@ -193,5 +195,6 @@ public class JavaPilotActor extends UntypedActor {
 	private void handleRaceStart(RaceStartMessage message) {
 		createTopology();
 		LOGGER.info("received race start");
+		raceStartEntryPoint.forward(message, getContext());
 	}
 }
