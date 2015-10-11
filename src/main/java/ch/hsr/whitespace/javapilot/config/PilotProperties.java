@@ -11,6 +11,15 @@ public class PilotProperties {
 	private String name;
 	private String accessCode;
 	private String rabbitUrl;
+	private int initialPower;
+
+	public int getInitialPower() {
+		return initialPower;
+	}
+
+	public void setInitialPower(int power) {
+		this.initialPower = power;
+	}
 
 	public String getRelayUrl() {
 		return relayUrl;

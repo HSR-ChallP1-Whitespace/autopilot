@@ -47,7 +47,7 @@ public class JavaPilotActor extends UntypedActor {
 	}
 
 	private void createTopology() {
-		Map<String, ActorRef> entryPoints = new PilotTopology(getSelf(), getContext().system()).create();
+		Map<String, ActorRef> entryPoints = new PilotTopology(getSelf(), getContext().system(), properties).create();
 
 		this.sensorEntryPoint = entryPoints.get(PilotTopology.SENSOR_ENTRYPOINT);
 		this.velocityEntryPoint = entryPoints.get(PilotTopology.VELOCITY_ENTRYPOINT);
