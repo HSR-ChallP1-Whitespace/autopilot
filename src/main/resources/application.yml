@@ -15,7 +15,7 @@ javapilot:
     relayUrl:       ws://localhost:8080/ws/rest/messages # Address of relay on local host
     trainingUrl:    http://localhost:8080/ws/rest/raceTracks/training # URL to start a training
     rabbitUrl:      localhost
-    power: 100
+    initialPower: 100
     #relayUrl:  ws://relay2.beta.swisscloud.io/ws/rest/messages # Address of relay in SC cloud !
 
 simulator:

@@ -14,7 +14,7 @@ import ch.hsr.whitespace.javapilot.config.PilotProperties;
  */
 public class WhiteSpacePilot extends UntypedActor {
 
-	private final PilotProperties properties;
+	private PilotProperties properties;
 
 	private ActorRef pilot;
 
@@ -34,9 +34,7 @@ public class WhiteSpacePilot extends UntypedActor {
 		dataAnalyzerActor.forward(message, getContext());
 		if (message instanceof SensorEvent) {
 			handleSensorEvent((SensorEvent) message);
-		}
-
-		else {
+		} else {
 			unhandled(message);
 		}
 	}

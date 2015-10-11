@@ -40,14 +40,12 @@ public class JavaPilotActor extends UntypedActor {
 	private PilotToRelayConnection relayConnection;
 
 	public JavaPilotActor(PilotProperties properties) {
-
 		this.properties = properties;
-
 		createTopology();
 	}
 
 	private void createTopology() {
-		Map<String, ActorRef> entryPoints = new PilotTopology(getSelf(), getContext().system(), properties).create();
+		Map<String, ActorRef> entryPoints = new PilotTopology(getSelf(), getContext().system(), this.properties).create();
 
 		this.sensorEntryPoint = entryPoints.get(PilotTopology.SENSOR_ENTRYPOINT);
 		this.velocityEntryPoint = entryPoints.get(PilotTopology.VELOCITY_ENTRYPOINT);
