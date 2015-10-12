@@ -1,5 +1,7 @@
 package ch.hsr.whitespace.javapilot.akka;
 
+import java.util.List;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -76,7 +78,16 @@ public class TrackRecognizerActor extends UntypedActor {
 	private void search4Periodicity() {
 		TrackPartMatcher matcher = new TrackPartMatcher(recognizedTrack.getParts());
 		if (matcher.match())
-			LOGGER.info("FOUND POSSIBLE TRACK PATTERN: " + recognizedTrack.getParts().toString());
+			LOGGER.info((char) 27 + "[33mFOUND POSSIBLE TRACK PATTERN: " + printTrack(recognizedTrack.getParts()) + (char) 27 + "[0m");
+
+	}
+
+	private String printTrack(List<TrackPart> parts) {
+		String temp = "\n";
+		for (TrackPart trackPart : parts) {
+			temp = temp + trackPart.toString() + "\n";
+		}
+		return temp;
 	}
 
 	private Direction getNewDirection(double gyrzValue, double gyrzStdDev) {
