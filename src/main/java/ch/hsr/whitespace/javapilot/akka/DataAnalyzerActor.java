@@ -17,7 +17,7 @@ public class DataAnalyzerActor extends UntypedActor {
 		smoothedValues = new FloatingHistory(8);
 	}
 
-	public static Props props(ActorRef pilot, int power) {
+	public static Props props(ActorRef pilot) {
 		return Props.create(DataAnalyzerActor.class, () -> new DataAnalyzerActor());
 	}
 
@@ -40,6 +40,7 @@ public class DataAnalyzerActor extends UntypedActor {
 
 		GyrZGraph.instance().storeValue(event.getTimeStamp(), gyrZ);
 		GyrZGraph.instance().storeValueSmoothed(event.getTimeStamp(), smoothedValues.currentMean());
+		GyrZGraph.instance().storeValueStdDev(event.getTimeStamp(), smoothedValues.currentStDev());
 	}
 
 }

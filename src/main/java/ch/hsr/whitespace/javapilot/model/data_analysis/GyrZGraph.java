@@ -34,6 +34,12 @@ public class GyrZGraph {
 		getGraphValue4Time(getRelativeTime(time)).setValueSmoothed(value);
 	}
 
+	public void storeValueStdDev(long time, double value) {
+		if (graphValues.isEmpty())
+			setStartTime(time);
+		getGraphValue4Time(getRelativeTime(time)).setValueStdDev(value);
+	}
+
 	private GyrZGraphValue getGraphValue4Time(long time) {
 		if (!graphValues.containsKey(time))
 			graphValues.put(time, new GyrZGraphValue(time));

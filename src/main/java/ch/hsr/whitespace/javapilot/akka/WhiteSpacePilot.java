@@ -19,6 +19,7 @@ public class WhiteSpacePilot extends UntypedActor {
 	private ActorRef pilot;
 
 	private ActorRef dataAnalyzerActor;
+	private ActorRef trackRecognizerActor;
 
 	public WhiteSpacePilot(ActorRef pilot, PilotProperties properties) {
 		this.pilot = pilot;
@@ -32,6 +33,7 @@ public class WhiteSpacePilot extends UntypedActor {
 	@Override
 	public void onReceive(Object message) throws Exception {
 		dataAnalyzerActor.forward(message, getContext());
+		trackRecognizerActor.forward(message, getContext());
 		if (message instanceof SensorEvent) {
 			handleSensorEvent((SensorEvent) message);
 		} else {
@@ -52,5 +54,6 @@ public class WhiteSpacePilot extends UntypedActor {
 
 	private void initChildActors() {
 		this.dataAnalyzerActor = getContext().actorOf(Props.create(DataAnalyzerActor.class));
+		this.trackRecognizerActor = getContext().actorOf(Props.create(TrackRecognizerActor.class));
 	}
 }
