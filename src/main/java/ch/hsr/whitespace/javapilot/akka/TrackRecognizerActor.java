@@ -1,5 +1,8 @@
 package ch.hsr.whitespace.javapilot.akka;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import com.zuehlke.carrera.relayapi.messages.RaceStartMessage;
 import com.zuehlke.carrera.relayapi.messages.RoundTimeMessage;
 import com.zuehlke.carrera.relayapi.messages.SensorEvent;
@@ -14,6 +17,8 @@ import ch.hsr.whitespace.javapilot.model.track.TrackPart;
 import ch.hsr.whitespace.javapilot.model.track.TrackPartMatcher;
 
 public class TrackRecognizerActor extends UntypedActor {
+
+	private final Logger LOGGER = LoggerFactory.getLogger(TrackRecognizerActor.class);
 
 	private static final int GYR_Z_STRAIGHT_STD_DEV_THRESHOLD = 400;
 	private static final int GYR_Z_LEFT_THRESHOLD = -200;
@@ -42,14 +47,13 @@ public class TrackRecognizerActor extends UntypedActor {
 		} else if (message instanceof RaceStartMessage) {
 			startTime = System.currentTimeMillis();
 			lastDirectionChangeTimeStamp = startTime;
-			System.out.println("starttime=" + startTime);
 		} else if (message instanceof RoundTimeMessage) {
 			handleRoundTimeEvent((RoundTimeMessage) message);
 		}
 	}
 
 	private void handleRoundTimeEvent(RoundTimeMessage message) {
-		System.out.println("Round-Duration: " + message.getRoundDuration());
+		LOGGER.info("Round-Duration: " + message.getRoundDuration());
 	}
 
 	private void handleSensorEvent(SensorEvent message) {
@@ -61,7 +65,7 @@ public class TrackRecognizerActor extends UntypedActor {
 			long start = lastDirectionChangeTimeStamp - startTime;
 			long end = message.getTimeStamp() - startTime;
 			TrackPart part = createTrackPart(lastDirection, start, end);
-			System.out.println(part);
+			LOGGER.info(part.toString());
 			recognizedTrack.addPart(part);
 			lastDirectionChangeTimeStamp = message.getTimeStamp();
 			search4Periodicity();
@@ -72,7 +76,7 @@ public class TrackRecognizerActor extends UntypedActor {
 	private void search4Periodicity() {
 		TrackPartMatcher matcher = new TrackPartMatcher(recognizedTrack.getParts());
 		if (matcher.match())
-			System.out.println("FOUND POSSIBLE TRACK PATTERN: " + recognizedTrack.getParts().toString());
+			LOGGER.info("FOUND POSSIBLE TRACK PATTERN: " + recognizedTrack.getParts().toString());
 	}
 
 	private Direction getNewDirection(double gyrzValue, double gyrzStdDev) {
