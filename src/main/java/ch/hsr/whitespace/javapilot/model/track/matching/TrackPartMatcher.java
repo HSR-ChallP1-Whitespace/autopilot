@@ -1,14 +1,16 @@
-package ch.hsr.whitespace.javapilot.model.track;
+package ch.hsr.whitespace.javapilot.model.track.matching;
 
 import java.util.ArrayList;
 import java.util.List;
 
+import ch.hsr.whitespace.javapilot.model.track.TrackPart;
 import ch.hsr.whitespace.javapilot.util.ListSplittupUtil;
 
 public class TrackPartMatcher {
 
 	private List<TrackPart> trackParts;
 	private ListSplittupUtil listSplitter;
+	private PossibleTrackMatch lastMatch;
 
 	public TrackPartMatcher(List<TrackPart> trackParts) {
 		this.trackParts = trackParts;
@@ -32,7 +34,12 @@ public class TrackPartMatcher {
 				return false;
 			}
 		}
+		lastMatch = new PossibleTrackMatch(list1);
 		return true;
+	}
+
+	public PossibleTrackMatch getLastMatch() {
+		return lastMatch;
 	}
 
 }

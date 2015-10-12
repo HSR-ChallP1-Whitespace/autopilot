@@ -41,6 +41,10 @@ public class TrackPart {
 		return this.direction == otherTrackPart.getDirection();
 	}
 
+	public long getDuration() {
+		return endTime - startTime;
+	}
+
 	@Override
 	public String toString() {
 		return "TrackPart[direction=" + direction + ", start=" + startTime + ", end=" + endTime + "]";

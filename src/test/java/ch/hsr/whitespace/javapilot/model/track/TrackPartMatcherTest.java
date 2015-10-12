@@ -7,6 +7,8 @@ import java.util.List;
 
 import org.junit.Test;
 
+import ch.hsr.whitespace.javapilot.model.track.matching.TrackPartMatcher;
+
 public class TrackPartMatcherTest {
 
 	private TrackPartMatcher matcher;

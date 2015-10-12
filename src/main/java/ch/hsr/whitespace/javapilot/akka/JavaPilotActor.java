@@ -35,7 +35,7 @@ public class JavaPilotActor extends UntypedActor {
 	private ActorRef sensorEntryPoint;
 	private ActorRef velocityEntryPoint;
 	private ActorRef penaltyEntryPoint;
-	private ActorRef raceStartEntryPoint;
+	private ActorRef raceTimesEntryPoint;
 
 	private PilotToRelayConnection relayConnection;
 
@@ -50,7 +50,7 @@ public class JavaPilotActor extends UntypedActor {
 		this.sensorEntryPoint = entryPoints.get(PilotTopology.SENSOR_ENTRYPOINT);
 		this.velocityEntryPoint = entryPoints.get(PilotTopology.VELOCITY_ENTRYPOINT);
 		this.penaltyEntryPoint = entryPoints.get(PilotTopology.PENALTY_ENTRYPOINT);
-		this.raceStartEntryPoint = entryPoints.get(PilotTopology.RACE_START_ENTRYPOINT);
+		this.raceTimesEntryPoint = entryPoints.get(PilotTopology.RACE_TIMES_ENTRYPOINT);
 	}
 
 	public static Props props(PilotProperties properties) {
@@ -118,7 +118,7 @@ public class JavaPilotActor extends UntypedActor {
 	}
 
 	private void handleRoundTime(RoundTimeMessage message) {
-		LOGGER.info("Round Time in ms: " + message.getRoundDuration());
+		raceTimesEntryPoint.forward(message, getContext());
 	}
 
 	private void handlePenaltyMessage(PenaltyMessage message) {
@@ -193,6 +193,6 @@ public class JavaPilotActor extends UntypedActor {
 	private void handleRaceStart(RaceStartMessage message) {
 		createTopology();
 		LOGGER.info("received race start");
-		raceStartEntryPoint.forward(message, getContext());
+		raceTimesEntryPoint.forward(message, getContext());
 	}
 }
