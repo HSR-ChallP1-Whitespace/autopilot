@@ -1,5 +1,7 @@
 package ch.hsr.whitespace.javapilot.akka;
 
+import java.util.List;
+
 import com.zuehlke.carrera.relayapi.messages.RaceStartMessage;
 import com.zuehlke.carrera.relayapi.messages.RoundTimeMessage;
 import com.zuehlke.carrera.relayapi.messages.SensorEvent;
@@ -72,7 +74,7 @@ public class TrackRecognizerActor extends UntypedActor {
 	private void search4Periodicity() {
 		TrackPartMatcher matcher = new TrackPartMatcher(recognizedTrack.getParts());
 		if (matcher.match())
-			System.out.println("FOUND POSSIBLE TRACK PATTERN: " + recognizedTrack.getParts().toString());
+			printPossibleTrackPattern(recognizedTrack.getParts());
 	}
 
 	private Direction getNewDirection(double gyrzValue, double gyrzStdDev) {
@@ -96,4 +98,16 @@ public class TrackRecognizerActor extends UntypedActor {
 		return currentDirection != lastDirection;
 	}
 
+	/**
+	 * Print with colored output. This works only in UNIX systems
+	 * 
+	 * @param patternList
+	 */
+	void printPossibleTrackPattern(List<TrackPart> patternList) {
+		System.out.println((char) 27 + "[35mFOUND POSSIBLE TRACK PATTERN: " + (char) 27 + "[0m");
+		for (TrackPart trackPart : patternList) {
+			System.out.println((char) 27 + "[33m" + trackPart.toString() + (char) 27 + "[0m");
+		}
+		System.out.println((char) 27 + "[35m-- END POSSIBLE TRACK PATTERN --" + (char) 27 + "[0m");
+	}
 }
