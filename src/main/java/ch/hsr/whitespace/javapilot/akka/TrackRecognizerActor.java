@@ -114,7 +114,7 @@ public class TrackRecognizerActor extends UntypedActor {
 			LOGGER.info("matchRoundTimeDiff=" + matchRoundTimeDiff);
 			if (matchRoundTimeDiff < MATCH_ROUND_TIME_DIFF_THRESHOLD) {
 				hasMatched = true;
-				LOGGER.info("Matched with pattern: " + closestMatch);
+				LOGGER.info((char) 27 + "[33mMatched with pattern: " + printTrack(closestMatch) + (char) 27 + "[0m");
 			}
 		}
 	}
