@@ -6,7 +6,6 @@ import java.util.List;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.zuehlke.carrera.relayapi.messages.RaceStartMessage;
 import com.zuehlke.carrera.relayapi.messages.RoundTimeMessage;
 import com.zuehlke.carrera.relayapi.messages.SensorEvent;
 import com.zuehlke.carrera.timeseries.FloatingHistory;
@@ -27,8 +26,10 @@ public class TrackRecognizerActor extends UntypedActor {
 	private static final int GYR_Z_STRAIGHT_STD_DEV_THRESHOLD = 900;
 	private static final int GYR_Z_LEFT_THRESHOLD = -200;
 	private static final int GYR_Z_RIGHT_THRESHOLD = 200;
+	private static final int MATCH_ROUND_TIME_DIFF_THRESHOLD = 2000;
 
 	private long startTime;
+	private long lastRoundTime = 0;
 	private Track recognizedTrack;
 
 	private FloatingHistory smoothedValues;
@@ -37,6 +38,8 @@ public class TrackRecognizerActor extends UntypedActor {
 
 	private List<PossibleTrackMatch> possibleMatches;
 	private PossibleTrackMatch closestMatch = null;
+
+	private boolean hasMatched = false;
 
 	public TrackRecognizerActor() {
 		recognizedTrack = new Track();
@@ -50,21 +53,29 @@ public class TrackRecognizerActor extends UntypedActor {
 
 	@Override
 	public void onReceive(Object message) throws Exception {
-		if (message instanceof SensorEvent) {
-			handleSensorEvent((SensorEvent) message);
-		} else if (message instanceof RaceStartMessage) {
-			startTime = System.currentTimeMillis();
-			lastDirectionChangeTimeStamp = startTime;
-		} else if (message instanceof RoundTimeMessage) {
-			handleRoundTimeEvent((RoundTimeMessage) message);
+		if (!hasMatched) {
+			if (message instanceof SensorEvent) {
+				if (startTime == 0) {
+					setStartTime((SensorEvent) message);
+				}
+				handleSensorEvent((SensorEvent) message);
+			} else if (message instanceof RoundTimeMessage) {
+				handleRoundTimeEvent((RoundTimeMessage) message);
+			}
 		}
 	}
 
-	private void handleRoundTimeEvent(RoundTimeMessage message) {
-		long roundDuration = message.getRoundDuration();
-		LOGGER.info("Round-Duration: " + roundDuration);
+	private void setStartTime(SensorEvent message) {
+		startTime = message.getTimeStamp();
+		lastDirectionChangeTimeStamp = startTime;
+	}
 
-		// search for closest track match
+	private void handleRoundTimeEvent(RoundTimeMessage message) {
+		lastRoundTime = message.getRoundDuration();
+		LOGGER.info("Round-Duration: " + lastRoundTime);
+	}
+
+	private void searchTrackMatchWithSmallestDiffToRoundTime(long roundDuration) {
 		PossibleTrackMatch tempMatch = null;
 		for (PossibleTrackMatch match : possibleMatches) {
 			if (tempMatch == null) {
@@ -78,8 +89,6 @@ public class TrackRecognizerActor extends UntypedActor {
 			}
 		}
 		closestMatch = tempMatch;
-		if (closestMatch != null)
-			LOGGER.info("Closest match with diff of " + Math.abs(roundDuration - closestMatch.getMatchDuration()) + " is " + closestMatch);
 	}
 
 	private void handleSensorEvent(SensorEvent message) {
@@ -88,15 +97,39 @@ public class TrackRecognizerActor extends UntypedActor {
 
 		Direction direction = getNewDirection(smoothedValues.currentMean(), smoothedValues.currentStDev());
 		if (hasDirectionChanged(direction)) {
-			long start = lastDirectionChangeTimeStamp - startTime;
-			long end = message.getTimeStamp() - startTime;
-			TrackPart part = createTrackPart(lastDirection, start, end);
-			LOGGER.info(part.toString());
-			recognizedTrack.addPart(part);
-			lastDirectionChangeTimeStamp = message.getTimeStamp();
+			saveTrackPart(message);
 			search4PossibleTrackMatches();
+			tryToConfirmTrackMatch();
 		}
 		lastDirection = direction;
+	}
+
+	private void tryToConfirmTrackMatch() {
+		if (!isRoundTimeAvailable())
+			return;
+
+		searchTrackMatchWithSmallestDiffToRoundTime(lastRoundTime);
+		if (closestMatch != null) {
+			long matchRoundTimeDiff = Math.abs(lastRoundTime - closestMatch.getMatchDuration());
+			LOGGER.info("matchRoundTimeDiff=" + matchRoundTimeDiff);
+			if (matchRoundTimeDiff < MATCH_ROUND_TIME_DIFF_THRESHOLD) {
+				hasMatched = true;
+				LOGGER.info("Matched with pattern: " + closestMatch);
+			}
+		}
+	}
+
+	private boolean isRoundTimeAvailable() {
+		return lastRoundTime > 0;
+	}
+
+	private void saveTrackPart(SensorEvent message) {
+		long start = lastDirectionChangeTimeStamp - startTime;
+		long end = message.getTimeStamp() - startTime;
+		TrackPart part = createTrackPart(lastDirection, start, end);
+		LOGGER.info(part.toString());
+		recognizedTrack.addPart(part);
+		lastDirectionChangeTimeStamp = message.getTimeStamp();
 	}
 
 	private void search4PossibleTrackMatches() {
