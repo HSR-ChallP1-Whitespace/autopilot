@@ -106,7 +106,6 @@ public class TrackRecognizerActor extends UntypedActor {
 		searchTrackMatchWithSmallestDiffToRoundTime(lastRoundTime);
 		if (closestMatch != null) {
 			long matchRoundTimeDiff = Math.abs(lastRoundTime - closestMatch.getMatchDuration());
-			LOGGER.info("matchRoundTimeDiff=" + matchRoundTimeDiff);
 			if (matchRoundTimeDiff < MATCH_ROUND_TIME_DIFF_THRESHOLD) {
 				hasMatched = true;
 				tellTrackRecognitionFinished();
