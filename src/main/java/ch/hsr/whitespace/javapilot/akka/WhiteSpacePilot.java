@@ -12,6 +12,7 @@ import akka.actor.ActorRef;
 import akka.actor.PoisonPill;
 import akka.actor.Props;
 import akka.actor.UntypedActor;
+import ch.hsr.whitespace.javapilot.akka.events.TrackRecognitionFinished;
 import ch.hsr.whitespace.javapilot.config.PilotProperties;
 import ch.hsr.whitespace.javapilot.model.track.TrackPart;
 
@@ -86,18 +87,5 @@ public class WhiteSpacePilot extends UntypedActor {
 		this.dataAnalyzerActor = getContext().actorOf(Props.create(DataAnalyzerActor.class));
 		this.trackRecognizerActor = getContext().actorOf(Props.create(TrackRecognizerActor.class));
 		this.positionCalculatorActor = getContext().actorOf(Props.create(PositionCalculatorActor.class));
-	}
-
-	static public class TrackRecognitionFinished {
-
-		public TrackRecognitionFinished(List<TrackPart> trackParts) {
-			this.trackParts = trackParts;
-		}
-
-		private List<TrackPart> trackParts;
-
-		public List<TrackPart> getTrackParts() {
-			return trackParts;
-		}
 	}
 }
