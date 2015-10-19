@@ -11,6 +11,7 @@ import com.zuehlke.carrera.timeseries.FloatingHistory;
 import akka.actor.ActorRef;
 import akka.actor.Props;
 import akka.actor.UntypedActor;
+import ch.hsr.whitespace.javapilot.akka.messages.DirectionChanged;
 import ch.hsr.whitespace.javapilot.akka.messages.TrackRecognitionFinished;
 import ch.hsr.whitespace.javapilot.model.track.Direction;
 import ch.hsr.whitespace.javapilot.model.track.TrackPart;
@@ -22,7 +23,9 @@ public class PositionCalculatorActor extends UntypedActor {
 	private List<TrackPart> trackParts;
 	private TrackPart currentTrackPart;
 	private int currentTrackPartIndex = 0;
-	FloatingHistory smoothedValues;
+	private FloatingHistory smoothedValues;
+
+	private long trackPartEntryTime = 0;
 
 	public static Props props(ActorRef pilot) {
 		return Props.create(PositionCalculatorActor.class, () -> new PositionCalculatorActor());
@@ -45,9 +48,28 @@ public class PositionCalculatorActor extends UntypedActor {
 	private void handleSensorEvent(SensorEvent message) {
 		smoothedValues.shift(message.getG()[2]);
 		if (hasDirectionChanged(smoothedValues.currentMean(), smoothedValues.currentStDev())) {
+			updateTrackPartTimestamps(message.getTimeStamp());
 			incrementCurrentTrack();
-			System.out.println("Current direction:" + getCurrentPositionString());
+			handleDirectionChange();
 		}
+	}
+
+	private void updateTrackPartTimestamps(long currentTimeStamp) {
+		if (trackPartEntryTime != 0) {
+			currentTrackPart.setStartTime(trackPartEntryTime);
+			currentTrackPart.setEndTime(currentTimeStamp);
+		}
+		trackPartEntryTime = currentTimeStamp;
+
+	}
+
+	private void handleDirectionChange() {
+		System.out.println("Current direction:" + getCurrentPositionString());
+		getContext().parent().tell(createDirectionChangedEvent(), getSelf());
+	}
+
+	private DirectionChanged createDirectionChangedEvent() {
+		return new DirectionChanged(currentTrackPart, trackParts.get(getNextTrackPartIndex()));
 	}
 
 	private boolean hasDirectionChanged(double gyrzValue, double gyrzStdDev) {
@@ -56,11 +78,15 @@ public class PositionCalculatorActor extends UntypedActor {
 	}
 
 	private void incrementCurrentTrack() {
-		if (currentTrackPartIndex == (trackParts.size() - 1))
-			currentTrackPartIndex = 0;
-		else
-			currentTrackPartIndex++;
+		currentTrackPartIndex = getNextTrackPartIndex();
 		currentTrackPart = trackParts.get(currentTrackPartIndex);
+	}
+
+	private int getNextTrackPartIndex() {
+		if (currentTrackPartIndex == (trackParts.size() - 1))
+			return 0;
+		else
+			return currentTrackPartIndex + 1;
 	}
 
 	private String getCurrentPositionString() {

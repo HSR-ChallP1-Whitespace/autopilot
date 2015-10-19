@@ -1,6 +1,7 @@
 package ch.hsr.whitespace.javapilot.akka;
 
 import com.zuehlke.carrera.relayapi.messages.RaceStartMessage;
+import com.zuehlke.carrera.relayapi.messages.RoundTimeMessage;
 import com.zuehlke.carrera.relayapi.messages.SensorEvent;
 import com.zuehlke.carrera.timeseries.FloatingHistory;
 
@@ -8,6 +9,7 @@ import akka.actor.ActorRef;
 import akka.actor.Props;
 import akka.actor.UntypedActor;
 import ch.hsr.whitespace.javapilot.model.data_analysis.GyrZGraph;
+import ch.hsr.whitespace.javapilot.model.data_analysis.RoundTimeGraph;
 
 public class DataAnalyzerActor extends UntypedActor {
 
@@ -27,11 +29,18 @@ public class DataAnalyzerActor extends UntypedActor {
 			handleSensorEvent((SensorEvent) message);
 		} else if (message instanceof RaceStartMessage) {
 			handleRaceStart((RaceStartMessage) message);
+		} else if (message instanceof RoundTimeMessage) {
+			handleRoundTimeMessage((RoundTimeMessage) message);
 		}
+	}
+
+	private void handleRoundTimeMessage(RoundTimeMessage message) {
+		RoundTimeGraph.instance().storeRoundTime(message.getRoundDuration());
 	}
 
 	private void handleRaceStart(RaceStartMessage message) {
 		GyrZGraph.instance().reset();
+		RoundTimeGraph.instance().reset();
 	}
 
 	private void handleSensorEvent(SensorEvent event) {

@@ -8,20 +8,29 @@ import org.springframework.web.bind.annotation.RestController;
 
 import ch.hsr.whitespace.javapilot.model.data_analysis.GyrZGraph;
 import ch.hsr.whitespace.javapilot.model.data_analysis.GyrZGraphValue;
+import ch.hsr.whitespace.javapilot.model.data_analysis.RoundTimeGraph;
+import ch.hsr.whitespace.javapilot.model.data_analysis.RoundTimeValue;
 
 @RestController
 @RequestMapping("/data/")
 public class DataAnalyzerController {
 
-	private GyrZGraph graph;
+	private GyrZGraph gyrzGraph;
+	private RoundTimeGraph roundTimeGraph;
 
 	public DataAnalyzerController() {
-		graph = GyrZGraph.instance();
+		gyrzGraph = GyrZGraph.instance();
+		roundTimeGraph = RoundTimeGraph.instance();
 	}
 
 	@RequestMapping(value = "/gyrz", method = RequestMethod.GET, produces = "application/json")
 	public Collection<GyrZGraphValue> getG2ZValues() {
-		return graph.getData();
+		return gyrzGraph.getData();
+	}
+
+	@RequestMapping(value = "/roundtimes", method = RequestMethod.GET, produces = "application/json")
+	public Collection<RoundTimeValue> getRoundTimeValues() {
+		return roundTimeGraph.getData();
 	}
 
 }
