@@ -1,4 +1,4 @@
-package ch.hsr.whitespace.javapilot.akka.events;
+package ch.hsr.whitespace.javapilot.akka.messages;
 
 import java.util.List;
 
