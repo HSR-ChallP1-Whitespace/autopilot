@@ -132,6 +132,6 @@ public class WhiteSpacePilot extends UntypedActor {
 	private void initChildActors() {
 		this.dataAnalyzerActor = getContext().actorOf(Props.create(DataAnalyzerActor.class));
 		this.trackRecognizerActor = getContext().actorOf(Props.create(TrackRecognizerActor.class));
-		this.positionCalculatorActor = getContext().actorOf(Props.create(PositionCalculatorActor.class));
+		this.positionCalculatorActor = getContext().actorOf(Props.create(PositionDetectorActor.class));
 	}
 }

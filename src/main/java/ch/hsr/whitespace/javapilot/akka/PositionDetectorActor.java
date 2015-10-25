@@ -16,9 +16,9 @@ import ch.hsr.whitespace.javapilot.akka.messages.TrackRecognitionFinished;
 import ch.hsr.whitespace.javapilot.model.track.Direction;
 import ch.hsr.whitespace.javapilot.model.track.TrackPart;
 
-public class PositionCalculatorActor extends UntypedActor {
+public class PositionDetectorActor extends UntypedActor {
 
-	private final Logger LOGGER = LoggerFactory.getLogger(PositionCalculatorActor.class);
+	private final Logger LOGGER = LoggerFactory.getLogger(PositionDetectorActor.class);
 
 	private List<TrackPart> trackParts;
 	private TrackPart currentTrackPart;
@@ -28,10 +28,10 @@ public class PositionCalculatorActor extends UntypedActor {
 	private long trackPartEntryTime = 0;
 
 	public static Props props(ActorRef pilot) {
-		return Props.create(PositionCalculatorActor.class, () -> new PositionCalculatorActor());
+		return Props.create(PositionDetectorActor.class, () -> new PositionDetectorActor());
 	}
 
-	public PositionCalculatorActor() {
+	public PositionDetectorActor() {
 		smoothedValues = new FloatingHistory(8);
 	}
 
