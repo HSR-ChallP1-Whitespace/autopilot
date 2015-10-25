@@ -47,9 +47,10 @@ public class PositionCalculatorActor extends UntypedActor {
 
 	private void handleSensorEvent(SensorEvent message) {
 		smoothedValues.shift(message.getG()[2]);
-		if (hasDirectionChanged(smoothedValues.currentMean(), smoothedValues.currentStDev())) {
+		Direction newDirection = Direction.getNewDirection(currentTrackPart.getDirection(), smoothedValues.currentMean(), smoothedValues.currentStDev());
+		if (hasDirectionChanged(newDirection)) {
 			updateTrackPartTimestamps(message.getTimeStamp());
-			incrementCurrentTrack();
+			incrementCurrentTrack(newDirection);
 			handleDirectionChange();
 		}
 	}
@@ -72,14 +73,15 @@ public class PositionCalculatorActor extends UntypedActor {
 		return new DirectionChanged(currentTrackPart, trackParts.get(getNextTrackPartIndex()));
 	}
 
-	private boolean hasDirectionChanged(double gyrzValue, double gyrzStdDev) {
-		Direction newDirection = Direction.getNewDirection(currentTrackPart.getDirection(), gyrzValue, gyrzStdDev);
+	private boolean hasDirectionChanged(Direction newDirection) {
 		return newDirection != currentTrackPart.getDirection();
 	}
 
-	private void incrementCurrentTrack() {
+	private void incrementCurrentTrack(Direction newDirection) {
 		currentTrackPartIndex = getNextTrackPartIndex();
 		currentTrackPart = trackParts.get(currentTrackPartIndex);
+		if (currentTrackPart.getDirection() != newDirection)
+			incrementCurrentTrack(newDirection);
 	}
 
 	private int getNextTrackPartIndex() {
