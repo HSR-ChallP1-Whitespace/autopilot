@@ -8,8 +8,8 @@ import com.zuehlke.carrera.timeseries.FloatingHistory;
 import akka.actor.ActorRef;
 import akka.actor.Props;
 import akka.actor.UntypedActor;
-import ch.hsr.whitespace.javapilot.model.data_analysis.GyrZGraph;
-import ch.hsr.whitespace.javapilot.model.data_analysis.RoundTimeGraph;
+import ch.hsr.whitespace.javapilot.model.data.analysis.GyrZGraph;
+import ch.hsr.whitespace.javapilot.model.data.analysis.RoundTimeGraph;
 
 public class DataAnalyzerActor extends UntypedActor {
 

@@ -14,12 +14,14 @@ import akka.actor.ActorRef;
 import akka.actor.PoisonPill;
 import akka.actor.Props;
 import akka.actor.UntypedActor;
+import ch.hsr.whitespace.javapilot.akka.messages.AccelerateMessage;
 import ch.hsr.whitespace.javapilot.akka.messages.BrakeMessage;
 import ch.hsr.whitespace.javapilot.akka.messages.DirectionChanged;
+import ch.hsr.whitespace.javapilot.akka.messages.InitializePositionDetection;
 import ch.hsr.whitespace.javapilot.akka.messages.TrackRecognitionFinished;
 import ch.hsr.whitespace.javapilot.config.PilotProperties;
-import ch.hsr.whitespace.javapilot.model.track.Direction;
-import ch.hsr.whitespace.javapilot.model.track.TrackPart;
+import ch.hsr.whitespace.javapilot.model.track.driving.DrivingTrackPart;
+import ch.hsr.whitespace.javapilot.model.track.recognition.RecognitionTrackPart;
 import scala.concurrent.duration.Duration;
 
 /**
@@ -37,10 +39,8 @@ public class WhiteSpacePilot extends UntypedActor {
 	private ActorRef pilot;
 	private ActorRef dataAnalyzerActor;
 	private ActorRef trackRecognizerActor;
-	private ActorRef positionCalculatorActor;
-
-	private List<TrackPart> trackParts;
-
+	private ActorRef positionDetectorActor;
+	private boolean trackRecognitionFinished = false;
 	private int currentPower;
 
 	public WhiteSpacePilot(ActorRef pilot, PilotProperties properties) {
@@ -59,7 +59,7 @@ public class WhiteSpacePilot extends UntypedActor {
 		if (message instanceof SensorEvent) {
 			handleSensorEvent((SensorEvent) message);
 		} else if (message instanceof TrackRecognitionFinished) {
-			handleTrackRecognitionFinished(message);
+			handleTrackRecognitionFinished((TrackRecognitionFinished) message);
 		} else if (message instanceof DirectionChanged) {
 			handleDirectionChanged((DirectionChanged) message);
 		} else if (message instanceof BrakeMessage) {
@@ -70,16 +70,15 @@ public class WhiteSpacePilot extends UntypedActor {
 	}
 
 	private void handleBrake(BrakeMessage message) {
-		LOGGER.info("Brake: " + message.getReducedPower());
 		setCurrentPower(message.getReducedPower());
 	}
 
 	private void handleDirectionChanged(DirectionChanged message) {
-		if (message.getTrackPart().getDirection() == Direction.STRAIGHT) {
-			message.getTrackPart().accelerate(20);
-			scheduleBrake((long) (message.getTrackPart().getDuration() * ACCELERATION_DURATION_FACTOR), message.getNextTrackPart().getCurrentPower());
-		}
-		setCurrentPower(message.getTrackPart().getCurrentPower());
+		int accelerationAmount = 20;
+		int accelerationSpeed = message.getTrackPart().getCurrentPower() + accelerationAmount;
+		positionDetectorActor.tell(new AccelerateMessage(message.getTrackPart().getId(), accelerationAmount), getSelf());
+		scheduleBrake((long) (message.getTrackPart().getDuration() * ACCELERATION_DURATION_FACTOR), message.getNextTrackPart().getCurrentPower());
+		setCurrentPower(accelerationSpeed);
 	}
 
 	private void scheduleBrake(long time, int power) {
@@ -96,24 +95,31 @@ public class WhiteSpacePilot extends UntypedActor {
 		if (!isTrackRecognitionFinished())
 			trackRecognizerActor.forward(message, getContext());
 		if (isTrackRecognitionFinished())
-			positionCalculatorActor.forward(message, getContext());
+			positionDetectorActor.forward(message, getContext());
 	}
 
 	private boolean isTrackRecognitionFinished() {
-		return trackParts != null;
+		return trackRecognitionFinished;
 	}
 
-	private void handleTrackRecognitionFinished(Object message) {
-		this.trackParts = new ArrayList<TrackPart>(((TrackRecognitionFinished) message).getTrackParts());
-		initializeTrackPartPower();
+	private void handleTrackRecognitionFinished(TrackRecognitionFinished message) {
+		trackRecognitionFinished = true;
 		trackRecognizerActor.tell(PoisonPill.getInstance(), getSelf());
-		positionCalculatorActor.tell(message, getSelf());
+		positionDetectorActor.tell(new InitializePositionDetection(initializeTrackParts4PositionDetector(message.getTrackParts())), getSelf());
 	}
 
-	private void initializeTrackPartPower() {
-		for (TrackPart part : trackParts) {
-			part.setCurrentPower(properties.getInitialPower());
+	private List<DrivingTrackPart> initializeTrackParts4PositionDetector(List<RecognitionTrackPart> recognizerParts) {
+		List<DrivingTrackPart> parts4PositionDetector = new ArrayList<>();
+		int idCounter = 1;
+		for (RecognitionTrackPart part : recognizerParts) {
+			DrivingTrackPart partCopy = new DrivingTrackPart(idCounter, part.getDirection());
+			partCopy.setCurrentPower(properties.getInitialPower());
+			partCopy.setStartTime(part.getStartTime());
+			partCopy.setEndTime(part.getEndTime());
+			parts4PositionDetector.add(partCopy);
+			idCounter++;
 		}
+		return parts4PositionDetector;
 	}
 
 	private void handleSensorEvent(SensorEvent event) {
@@ -132,6 +138,6 @@ public class WhiteSpacePilot extends UntypedActor {
 	private void initChildActors() {
 		this.dataAnalyzerActor = getContext().actorOf(Props.create(DataAnalyzerActor.class));
 		this.trackRecognizerActor = getContext().actorOf(Props.create(TrackRecognizerActor.class));
-		this.positionCalculatorActor = getContext().actorOf(Props.create(PositionDetectorActor.class));
+		this.positionDetectorActor = getContext().actorOf(Props.create(PositionDetectorActor.class));
 	}
 }

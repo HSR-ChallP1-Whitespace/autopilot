@@ -1,22 +1,18 @@
-package ch.hsr.whitespace.javapilot.model.track;
+package ch.hsr.whitespace.javapilot.model.track.recognition;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import ch.hsr.whitespace.javapilot.model.track.Direction;
 
-public class TrackPart {
-
-	private final Logger LOGGER = LoggerFactory.getLogger(TrackPart.class);
+public class RecognitionTrackPart {
 
 	private Direction direction;
 	private long startTime;
 	private long endTime;
-	private int currentPower;
 
-	public TrackPart(Direction direction) {
+	public RecognitionTrackPart(Direction direction) {
 		this.direction = direction;
 	}
 
-	public TrackPart(Direction direction, long startTime, long endTime) {
+	public RecognitionTrackPart(Direction direction, long startTime, long endTime) {
 		this(direction);
 		this.startTime = startTime;
 		this.endTime = endTime;
@@ -46,26 +42,12 @@ public class TrackPart {
 		this.endTime = endTime;
 	}
 
-	public int getCurrentPower() {
-		return currentPower;
-	}
-
-	public void setCurrentPower(int currentPower) {
-		this.currentPower = currentPower;
-	}
-
-	public boolean hasSameDirection(TrackPart otherTrackPart) {
+	public boolean hasSameDirection(RecognitionTrackPart otherTrackPart) {
 		return this.direction == otherTrackPart.getDirection();
 	}
 
 	public long getDuration() {
 		return endTime - startTime;
-	}
-
-	public int accelerate(int amount) {
-		currentPower += amount;
-		LOGGER.info("Accelerate: " + currentPower);
-		return currentPower;
 	}
 
 	@Override

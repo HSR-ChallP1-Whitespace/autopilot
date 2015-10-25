@@ -1,4 +1,4 @@
-package ch.hsr.whitespace.javapilot.model.data_analysis;
+package ch.hsr.whitespace.javapilot.model.data.analysis;
 
 import java.util.Collection;
 import java.util.Map;

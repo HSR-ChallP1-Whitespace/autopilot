@@ -1,18 +1,18 @@
-package ch.hsr.whitespace.javapilot.model.track.matching;
+package ch.hsr.whitespace.javapilot.model.track.recognition.matching;
 
 import java.util.ArrayList;
 import java.util.List;
 
-import ch.hsr.whitespace.javapilot.model.track.TrackPart;
+import ch.hsr.whitespace.javapilot.model.track.recognition.RecognitionTrackPart;
 import ch.hsr.whitespace.javapilot.util.ListSplittupUtil;
 
 public class TrackPartMatcher {
 
-	private List<TrackPart> trackParts;
+	private List<RecognitionTrackPart> trackParts;
 	private ListSplittupUtil listSplitter;
 	private PossibleTrackMatch lastMatch;
 
-	public TrackPartMatcher(List<TrackPart> trackParts) {
+	public TrackPartMatcher(List<RecognitionTrackPart> trackParts) {
 		this.trackParts = trackParts;
 		this.listSplitter = new ListSplittupUtil();
 	}
@@ -21,9 +21,9 @@ public class TrackPartMatcher {
 		if (trackParts.isEmpty() || (trackParts.size() % 2) != 0)
 			return false;
 
-		List<TrackPart> trackPartList = new ArrayList<TrackPart>(trackParts);
-		List<TrackPart> list1 = new ArrayList<TrackPart>();
-		List<TrackPart> list2 = new ArrayList<TrackPart>();
+		List<RecognitionTrackPart> trackPartList = new ArrayList<RecognitionTrackPart>(trackParts);
+		List<RecognitionTrackPart> list1 = new ArrayList<RecognitionTrackPart>();
+		List<RecognitionTrackPart> list2 = new ArrayList<RecognitionTrackPart>();
 		listSplitter.splitListIntoTwoParts(trackPartList, list1, list2);
 
 		if (list1.size() != list2.size())

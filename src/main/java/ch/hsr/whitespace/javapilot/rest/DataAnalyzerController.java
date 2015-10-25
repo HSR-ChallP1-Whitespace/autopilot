@@ -6,10 +6,10 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RestController;
 
-import ch.hsr.whitespace.javapilot.model.data_analysis.GyrZGraph;
-import ch.hsr.whitespace.javapilot.model.data_analysis.GyrZGraphValue;
-import ch.hsr.whitespace.javapilot.model.data_analysis.RoundTimeGraph;
-import ch.hsr.whitespace.javapilot.model.data_analysis.RoundTimeValue;
+import ch.hsr.whitespace.javapilot.model.data.analysis.GyrZGraph;
+import ch.hsr.whitespace.javapilot.model.data.analysis.GyrZGraphValue;
+import ch.hsr.whitespace.javapilot.model.data.analysis.RoundTimeGraph;
+import ch.hsr.whitespace.javapilot.model.data.analysis.RoundTimeValue;
 
 @RestController
 @RequestMapping("/data/")

@@ -1,22 +1,22 @@
 package ch.hsr.whitespace.javapilot.akka.messages;
 
-import ch.hsr.whitespace.javapilot.model.track.TrackPart;
+import ch.hsr.whitespace.javapilot.model.track.driving.DrivingTrackPart;
 
 public class DirectionChanged {
 
-	private TrackPart part;
-	private TrackPart nextPart;
+	private DrivingTrackPart part;
+	private DrivingTrackPart nextPart;
 
-	public DirectionChanged(TrackPart part, TrackPart nextPart) {
+	public DirectionChanged(DrivingTrackPart part, DrivingTrackPart nextPart) {
 		this.part = part;
 		this.nextPart = nextPart;
 	}
 
-	public TrackPart getTrackPart() {
+	public DrivingTrackPart getTrackPart() {
 		return part;
 	}
 
-	public TrackPart getNextTrackPart() {
+	public DrivingTrackPart getNextTrackPart() {
 		return nextPart;
 	}
 

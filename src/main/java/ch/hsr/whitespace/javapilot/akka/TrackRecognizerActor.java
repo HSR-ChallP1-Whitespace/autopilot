@@ -15,10 +15,10 @@ import akka.actor.Props;
 import akka.actor.UntypedActor;
 import ch.hsr.whitespace.javapilot.akka.messages.TrackRecognitionFinished;
 import ch.hsr.whitespace.javapilot.model.track.Direction;
-import ch.hsr.whitespace.javapilot.model.track.Track;
-import ch.hsr.whitespace.javapilot.model.track.TrackPart;
-import ch.hsr.whitespace.javapilot.model.track.matching.PossibleTrackMatch;
-import ch.hsr.whitespace.javapilot.model.track.matching.TrackPartMatcher;
+import ch.hsr.whitespace.javapilot.model.track.recognition.RecognitionTrack;
+import ch.hsr.whitespace.javapilot.model.track.recognition.RecognitionTrackPart;
+import ch.hsr.whitespace.javapilot.model.track.recognition.matching.PossibleTrackMatch;
+import ch.hsr.whitespace.javapilot.model.track.recognition.matching.TrackPartMatcher;
 
 public class TrackRecognizerActor extends UntypedActor {
 
@@ -29,7 +29,7 @@ public class TrackRecognizerActor extends UntypedActor {
 	private boolean hasMatched = false;
 	private long startTime;
 	private long lastRoundTime = 0;
-	private Track recognizedTrack;
+	private RecognitionTrack recognizedTrack;
 	private FloatingHistory smoothedValues;
 	private Direction lastDirection;
 	private long lastDirectionChangeTimeStamp;
@@ -37,7 +37,7 @@ public class TrackRecognizerActor extends UntypedActor {
 	private PossibleTrackMatch closestMatch = null;
 
 	public TrackRecognizerActor() {
-		recognizedTrack = new Track();
+		recognizedTrack = new RecognitionTrack();
 		smoothedValues = new FloatingHistory(8);
 		possibleMatches = new ArrayList<>();
 	}
@@ -126,7 +126,7 @@ public class TrackRecognizerActor extends UntypedActor {
 	private void saveTrackPart(SensorEvent message) {
 		long start = lastDirectionChangeTimeStamp - startTime;
 		long end = message.getTimeStamp() - startTime;
-		TrackPart part = createTrackPart(lastDirection, start, end);
+		RecognitionTrackPart part = createTrackPart(lastDirection, start, end);
 		LOGGER.info(part.toString());
 		recognizedTrack.addPart(part);
 		lastDirectionChangeTimeStamp = message.getTimeStamp();
@@ -143,7 +143,7 @@ public class TrackRecognizerActor extends UntypedActor {
 
 	private String printTrack(PossibleTrackMatch possibleMatch) {
 		String temp = "\n";
-		for (TrackPart trackPart : possibleMatch.getTrackParts()) {
+		for (RecognitionTrackPart trackPart : possibleMatch.getTrackParts()) {
 			temp = temp + trackPart.toString() + "\n";
 		}
 		return temp;
@@ -153,8 +153,8 @@ public class TrackRecognizerActor extends UntypedActor {
 		return Direction.getNewDirection(lastDirection, gyrzValue, gyrzStdDev);
 	}
 
-	private TrackPart createTrackPart(Direction direction, long startTime, long endTime) {
-		return new TrackPart(direction, startTime, endTime);
+	private RecognitionTrackPart createTrackPart(Direction direction, long startTime, long endTime) {
+		return new RecognitionTrackPart(direction, startTime, endTime);
 	}
 
 	private boolean hasDirectionChanged(Direction currentDirection) {

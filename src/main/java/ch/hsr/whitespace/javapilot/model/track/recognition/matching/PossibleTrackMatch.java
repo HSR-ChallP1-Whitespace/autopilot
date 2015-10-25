@@ -1,23 +1,23 @@
-package ch.hsr.whitespace.javapilot.model.track.matching;
+package ch.hsr.whitespace.javapilot.model.track.recognition.matching;
 
 import java.util.ArrayList;
 import java.util.List;
 
-import ch.hsr.whitespace.javapilot.model.track.TrackPart;
+import ch.hsr.whitespace.javapilot.model.track.recognition.RecognitionTrackPart;
 
 public class PossibleTrackMatch {
 
-	private List<TrackPart> parts;
+	private List<RecognitionTrackPart> parts;
 	private long matchDuration;
 
-	public PossibleTrackMatch(List<TrackPart> parts) {
+	public PossibleTrackMatch(List<RecognitionTrackPart> parts) {
 		this.parts = new ArrayList<>(parts);
 		calculateMatchDuration();
 	}
 
 	private void calculateMatchDuration() {
 		long tmpDuration = 0;
-		for (TrackPart part : parts) {
+		for (RecognitionTrackPart part : parts) {
 			tmpDuration = tmpDuration + part.getDuration();
 		}
 		matchDuration = tmpDuration;
@@ -32,7 +32,7 @@ public class PossibleTrackMatch {
 		return parts.toString();
 	}
 
-	public List<TrackPart> getTrackParts() {
+	public List<RecognitionTrackPart> getTrackParts() {
 		return parts;
 	}
 
