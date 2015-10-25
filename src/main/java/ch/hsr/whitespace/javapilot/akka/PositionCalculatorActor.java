@@ -93,15 +93,15 @@ public class PositionCalculatorActor extends UntypedActor {
 
 	private String getCurrentPositionString() {
 		StringBuffer sb = new StringBuffer();
-		sb.append("-- ");
+		sb.append("- ");
 		for (int i = 0; i < trackParts.size(); i++) {
 			if (i == currentTrackPartIndex)
-				sb.append((char) 27 + "[33m");
+				sb.append((char) 27 + "[35m");
 			sb.append(getDirectionShortCut(trackParts.get(i).getDirection()));
 			sb.append(" (" + i + ")");
 			if (i == currentTrackPartIndex)
 				sb.append((char) 27 + "[0m");
-			sb.append(" -- ");
+			sb.append(" - ");
 		}
 		return sb.toString();
 	}
