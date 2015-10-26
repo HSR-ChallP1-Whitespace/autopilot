@@ -7,15 +7,16 @@ import java.util.TreeMap;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.zuehlke.carrera.relayapi.messages.PenaltyMessage;
 import com.zuehlke.carrera.relayapi.messages.SensorEvent;
 import com.zuehlke.carrera.timeseries.FloatingHistory;
 
 import akka.actor.ActorRef;
 import akka.actor.Props;
 import akka.actor.UntypedActor;
-import ch.hsr.whitespace.javapilot.akka.messages.AccelerateMessage;
 import ch.hsr.whitespace.javapilot.akka.messages.DirectionChanged;
 import ch.hsr.whitespace.javapilot.akka.messages.InitializePositionDetection;
+import ch.hsr.whitespace.javapilot.akka.messages.PowerChangeMessage;
 import ch.hsr.whitespace.javapilot.model.track.Direction;
 import ch.hsr.whitespace.javapilot.model.track.driving.DrivingTrackPart;
 
@@ -29,6 +30,7 @@ public class PositionDetectorActor extends UntypedActor {
 	private FloatingHistory smoothedValues;
 
 	private long trackPartEntryTime = 0;
+	private long trackPartEntryTimeLocal = 0;
 
 	public static Props props(ActorRef pilot) {
 		return Props.create(PositionDetectorActor.class, () -> new PositionDetectorActor());
@@ -44,34 +46,49 @@ public class PositionDetectorActor extends UntypedActor {
 		if (message instanceof InitializePositionDetection) {
 			initializeTrackPartMap(((InitializePositionDetection) message).getTrackParts());
 			currentTrackPart = trackParts.get(currentTrackPartId);
-		} else if (message instanceof AccelerateMessage) {
-			handleAccelerateMessage((AccelerateMessage) message);
+		} else if (message instanceof PowerChangeMessage) {
+			handleAccelerateMessage((PowerChangeMessage) message);
 		} else if (message instanceof SensorEvent && trackParts != null) {
 			handleSensorEvent((SensorEvent) message);
+		} else if (message instanceof PenaltyMessage) {
+			handlePenalty((PenaltyMessage) message);
 		}
 	}
 
-	private void handleAccelerateMessage(AccelerateMessage accelerateMessage) {
-		trackParts.get(accelerateMessage.getTrackPartId()).accelerate(accelerateMessage.getSpeed());
+	private void handlePenalty(PenaltyMessage message) {
+		// long penaltyTime = System.currentTimeMillis() -
+		// trackPartEntryTimeLocal;
+		// LOGGER.warn("PENALTY: trackPartDuration=" +
+		// currentTrackPart.getLocalDuration() + ", penalty-time=" +
+		// penaltyTime);
+		currentTrackPart.addPenalty(System.currentTimeMillis());
+	}
+
+	private void handleAccelerateMessage(PowerChangeMessage accelerateMessage) {
+		trackParts.get(accelerateMessage.getTrackPartId()).setCurrentPower(accelerateMessage.getPower());
 	}
 
 	private void handleSensorEvent(SensorEvent message) {
 		smoothedValues.shift(message.getG()[2]);
 		Direction newDirection = Direction.getNewDirection(currentTrackPart.getDirection(), smoothedValues.currentMean(), smoothedValues.currentStDev());
 		if (hasDirectionChanged(newDirection)) {
-			updateTrackPartTimestamps(message.getTimeStamp());
+			updateTrackPartTimestamps(message.getTimeStamp(), System.currentTimeMillis());
 			incrementCurrentTrack(newDirection);
 			handleDirectionChange();
 		}
 	}
 
-	private void updateTrackPartTimestamps(long currentTimeStamp) {
+	private void updateTrackPartTimestamps(long currentTimeStamp, long currentTimeStampLocal) {
 		if (trackPartEntryTime != 0) {
 			currentTrackPart.setStartTime(trackPartEntryTime);
 			currentTrackPart.setEndTime(currentTimeStamp);
 		}
+		if (trackPartEntryTimeLocal != 0) {
+			currentTrackPart.setLocalStartTime(trackPartEntryTimeLocal);
+			currentTrackPart.setLocalEndTime(currentTimeStampLocal);
+		}
 		trackPartEntryTime = currentTimeStamp;
-
+		trackPartEntryTimeLocal = currentTimeStampLocal;
 	}
 
 	private void handleDirectionChange() {

@@ -1,5 +1,9 @@
 package ch.hsr.whitespace.javapilot.model.track.driving;
 
+import java.util.ArrayList;
+import java.util.List;
+
+import ch.hsr.whitespace.javapilot.model.Power;
 import ch.hsr.whitespace.javapilot.model.track.Direction;
 
 public class DrivingTrackPart {
@@ -8,11 +12,16 @@ public class DrivingTrackPart {
 	private Direction direction;
 	private long startTime;
 	private long endTime;
-	private int currentPower;
+	private long localStartTime;
+	private long localEndTime;
+	private Power currentPower;
+	private boolean hasPenalty = false;
+	private List<Long> penaltyTimestamps;
 
 	public DrivingTrackPart(int id, Direction direction) {
 		this.id = id;
 		this.direction = direction;
+		this.penaltyTimestamps = new ArrayList<>();
 	}
 
 	public DrivingTrackPart(int id, Direction direction, long startTime, long endTime) {
@@ -49,6 +58,22 @@ public class DrivingTrackPart {
 		this.endTime = endTime;
 	}
 
+	public long getLocalStartTime() {
+		return localStartTime;
+	}
+
+	public void setLocalStartTime(long localStartTime) {
+		this.localStartTime = localStartTime;
+	}
+
+	public long getLocalEndTime() {
+		return localEndTime;
+	}
+
+	public void setLocalEndTime(long localEndTime) {
+		this.localEndTime = localEndTime;
+	}
+
 	public boolean hasSameDirection(DrivingTrackPart otherTrackPart) {
 		return this.direction == otherTrackPart.getDirection();
 	}
@@ -57,17 +82,25 @@ public class DrivingTrackPart {
 		return endTime - startTime;
 	}
 
-	public int getCurrentPower() {
+	public long getLocalDuration() {
+		return localEndTime - localStartTime;
+	}
+
+	public Power getCurrentPower() {
 		return currentPower;
 	}
 
-	public void setCurrentPower(int currentPower) {
-		this.currentPower = currentPower;
+	public void setCurrentPower(Power currentPower) {
+		this.currentPower = new Power(currentPower.getValue());
 	}
 
-	public int accelerate(int amount) {
-		currentPower += amount;
-		return currentPower;
+	public void addPenalty(long timestamp) {
+		penaltyTimestamps.add(timestamp);
+		hasPenalty = true;
+	}
+
+	public boolean hasPenalty() {
+		return hasPenalty;
 	}
 
 	@Override

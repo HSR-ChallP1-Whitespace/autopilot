@@ -2,7 +2,6 @@ package ch.hsr.whitespace.javapilot.akka;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.TimeUnit;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -14,23 +13,21 @@ import akka.actor.ActorRef;
 import akka.actor.PoisonPill;
 import akka.actor.Props;
 import akka.actor.UntypedActor;
-import ch.hsr.whitespace.javapilot.akka.messages.AccelerateMessage;
-import ch.hsr.whitespace.javapilot.akka.messages.BrakeMessage;
 import ch.hsr.whitespace.javapilot.akka.messages.DirectionChanged;
 import ch.hsr.whitespace.javapilot.akka.messages.InitializePositionDetection;
+import ch.hsr.whitespace.javapilot.akka.messages.PowerChangeMessage;
 import ch.hsr.whitespace.javapilot.akka.messages.TrackRecognitionFinished;
 import ch.hsr.whitespace.javapilot.config.PilotProperties;
+import ch.hsr.whitespace.javapilot.model.Power;
+import ch.hsr.whitespace.javapilot.model.track.Direction;
 import ch.hsr.whitespace.javapilot.model.track.driving.DrivingTrackPart;
 import ch.hsr.whitespace.javapilot.model.track.recognition.RecognitionTrackPart;
-import scala.concurrent.duration.Duration;
 
 /**
  * Main Pilot-Actor
  * 
  */
 public class WhiteSpacePilot extends UntypedActor {
-
-	private static final double ACCELERATION_DURATION_FACTOR = 0.5;
 
 	private final Logger LOGGER = LoggerFactory.getLogger(WhiteSpacePilot.class);
 
@@ -41,12 +38,12 @@ public class WhiteSpacePilot extends UntypedActor {
 	private ActorRef trackRecognizerActor;
 	private ActorRef positionDetectorActor;
 	private boolean trackRecognitionFinished = false;
-	private int currentPower;
+	private Power currentPower;
 
 	public WhiteSpacePilot(ActorRef pilot, PilotProperties properties) {
 		this.pilot = pilot;
 		this.properties = properties;
-		this.currentPower = properties.getInitialPower();
+		this.currentPower = new Power(properties.getInitialPower());
 	}
 
 	public static Props props(ActorRef pilot, PilotProperties properties) {
@@ -62,32 +59,21 @@ public class WhiteSpacePilot extends UntypedActor {
 			handleTrackRecognitionFinished((TrackRecognitionFinished) message);
 		} else if (message instanceof DirectionChanged) {
 			handleDirectionChanged((DirectionChanged) message);
-		} else if (message instanceof BrakeMessage) {
-			handleBrake((BrakeMessage) message);
 		} else {
 			unhandled(message);
 		}
 	}
 
-	private void handleBrake(BrakeMessage message) {
-		setCurrentPower(message.getReducedPower());
-	}
-
 	private void handleDirectionChanged(DirectionChanged message) {
-		int accelerationAmount = 20;
-		int accelerationSpeed = message.getTrackPart().getCurrentPower() + accelerationAmount;
-		positionDetectorActor.tell(new AccelerateMessage(message.getTrackPart().getId(), accelerationAmount), getSelf());
-		scheduleBrake((long) (message.getTrackPart().getDuration() * ACCELERATION_DURATION_FACTOR), message.getNextTrackPart().getCurrentPower());
-		setCurrentPower(accelerationSpeed);
+		Power increasedPower = calculateIncreasedPower(message);
+		positionDetectorActor.tell(new PowerChangeMessage(message.getTrackPart().getId(), increasedPower), getSelf());
+		setCurrentPower(increasedPower);
 	}
 
-	private void scheduleBrake(long time, int power) {
-		getContext().system().scheduler().scheduleOnce(Duration.create(time, TimeUnit.MILLISECONDS), new Runnable() {
-			@Override
-			public void run() {
-				getSelf().tell(new BrakeMessage(power), ActorRef.noSender());
-			}
-		}, getContext().dispatcher());
+	private Power calculateIncreasedPower(DirectionChanged message) {
+		if (message.getTrackPart().getDirection() == Direction.STRAIGHT)
+			return message.getTrackPart().getCurrentPower().increase(20);
+		return currentPower;
 	}
 
 	private void forwardMessagesToChildren(Object message) {
@@ -113,7 +99,7 @@ public class WhiteSpacePilot extends UntypedActor {
 		int idCounter = 1;
 		for (RecognitionTrackPart part : recognizerParts) {
 			DrivingTrackPart partCopy = new DrivingTrackPart(idCounter, part.getDirection());
-			partCopy.setCurrentPower(properties.getInitialPower());
+			partCopy.setCurrentPower(new Power(properties.getInitialPower()));
 			partCopy.setStartTime(part.getStartTime());
 			partCopy.setEndTime(part.getEndTime());
 			parts4PositionDetector.add(partCopy);
@@ -123,10 +109,10 @@ public class WhiteSpacePilot extends UntypedActor {
 	}
 
 	private void handleSensorEvent(SensorEvent event) {
-		pilot.tell(new PowerAction(currentPower), getSelf());
+		pilot.tell(new PowerAction(currentPower.getValue()), getSelf());
 	}
 
-	private void setCurrentPower(int power) {
+	private void setCurrentPower(Power power) {
 		currentPower = power;
 	}
 
