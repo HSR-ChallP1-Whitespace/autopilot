@@ -89,7 +89,7 @@ public class PositionDetectorActor extends UntypedActor {
 	}
 
 	private void handleDirectionChange() {
-		System.out.println("Current direction:" + getCurrentPositionString());
+		LOGGER.info("Position: " + getCurrentPositionString());
 		getContext().parent().tell(createDirectionChangedEvent(), getSelf());
 	}
 
@@ -117,15 +117,15 @@ public class PositionDetectorActor extends UntypedActor {
 
 	private String getCurrentPositionString() {
 		StringBuffer sb = new StringBuffer();
-		sb.append("- ");
+		sb.append("-");
 		for (int i = 1; i <= trackParts.size(); i++) {
 			if (i == currentTrackPartId)
 				sb.append((char) 27 + "[35m");
 			sb.append(getDirectionShortCut(trackParts.get(i).getDirection()));
-			sb.append(" (" + i + ")");
+			sb.append("(" + i + ")");
 			if (i == currentTrackPartId)
 				sb.append((char) 27 + "[0m");
-			sb.append(" - ");
+			sb.append("-");
 		}
 		return sb.toString();
 	}
