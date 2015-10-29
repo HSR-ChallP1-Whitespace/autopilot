@@ -1,5 +1,8 @@
 package ch.hsr.whitespace.javapilot.model.track.recognition;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import ch.hsr.whitespace.javapilot.model.track.Direction;
 
 public class RecognitionTrackPart {
@@ -7,9 +10,11 @@ public class RecognitionTrackPart {
 	private Direction direction;
 	private long startTime;
 	private long endTime;
+	private List<RecognitionVelocityBarrier> velocityBarriers;
 
 	public RecognitionTrackPart(Direction direction) {
 		this.direction = direction;
+		this.velocityBarriers = new ArrayList<>();
 	}
 
 	public RecognitionTrackPart(Direction direction, long startTime, long endTime) {
@@ -50,9 +55,26 @@ public class RecognitionTrackPart {
 		return endTime - startTime;
 	}
 
+	public void addVelocityBarrier(RecognitionVelocityBarrier barrier) {
+		calculateBarrierPosition(barrier);
+		this.velocityBarriers.add(barrier);
+	}
+
+	private void calculateBarrierPosition(RecognitionVelocityBarrier barrier) {
+		double barrierTimeStamp = barrier.getTimestamp() - startTime;
+		double endTimeStamp = endTime - startTime;
+		barrier.setPositionInTrackPart(barrierTimeStamp / endTimeStamp);
+	}
+
 	@Override
 	public String toString() {
-		return "TrackPart[direction=" + direction + ", start=" + startTime + ", end=" + endTime + "]";
+		String barriers = "";
+		int counter = 1;
+		for (RecognitionVelocityBarrier barrier : velocityBarriers) {
+			barriers += "barrier" + counter + "=" + barrier.getPositionInTrackPart() + ", ";
+			counter++;
+		}
+		return "TrackPart[direction=" + direction + ", start=" + startTime + ", end=" + endTime + ", " + barriers + "]";
 	}
 
 }

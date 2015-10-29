@@ -8,6 +8,7 @@ import org.slf4j.LoggerFactory;
 
 import com.zuehlke.carrera.relayapi.messages.RoundTimeMessage;
 import com.zuehlke.carrera.relayapi.messages.SensorEvent;
+import com.zuehlke.carrera.relayapi.messages.VelocityMessage;
 import com.zuehlke.carrera.timeseries.FloatingHistory;
 
 import akka.actor.ActorRef;
@@ -17,6 +18,7 @@ import ch.hsr.whitespace.javapilot.akka.messages.TrackRecognitionFinished;
 import ch.hsr.whitespace.javapilot.model.track.Direction;
 import ch.hsr.whitespace.javapilot.model.track.recognition.RecognitionTrack;
 import ch.hsr.whitespace.javapilot.model.track.recognition.RecognitionTrackPart;
+import ch.hsr.whitespace.javapilot.model.track.recognition.RecognitionVelocityBarrier;
 import ch.hsr.whitespace.javapilot.model.track.recognition.matching.PossibleTrackMatch;
 import ch.hsr.whitespace.javapilot.model.track.recognition.matching.TrackPartMatcher;
 
@@ -35,11 +37,13 @@ public class TrackRecognizerActor extends UntypedActor {
 	private long lastDirectionChangeTimeStamp;
 	private List<PossibleTrackMatch> possibleMatches;
 	private PossibleTrackMatch closestMatch = null;
+	private List<RecognitionVelocityBarrier> tempVelocityBarriers;
 
 	public TrackRecognizerActor() {
 		recognizedTrack = new RecognitionTrack();
 		smoothedValues = new FloatingHistory(8);
 		possibleMatches = new ArrayList<>();
+		tempVelocityBarriers = new ArrayList<>();
 	}
 
 	public static Props props(ActorRef pilot) {
@@ -56,8 +60,17 @@ public class TrackRecognizerActor extends UntypedActor {
 				handleSensorEvent((SensorEvent) message);
 			} else if (message instanceof RoundTimeMessage) {
 				handleRoundTimeEvent((RoundTimeMessage) message);
+			} else if (message instanceof VelocityMessage) {
+				handleVelocityMessage((VelocityMessage) message);
 			}
 		}
+	}
+
+	private void handleVelocityMessage(VelocityMessage message) {
+		RecognitionVelocityBarrier barrier = new RecognitionVelocityBarrier();
+		barrier.setTimestamp(message.getTimeStamp() - startTime);
+		barrier.setVelocity(message.getVelocity());
+		tempVelocityBarriers.add(barrier);
 	}
 
 	private void setStartTime(SensorEvent message) {
@@ -109,7 +122,8 @@ public class TrackRecognizerActor extends UntypedActor {
 			if (matchRoundTimeDiff < MATCH_ROUND_TIME_DIFF_THRESHOLD) {
 				hasMatched = true;
 				tellTrackRecognitionFinished();
-				LOGGER.info((char) 27 + "[33mMatched with pattern: " + printTrack(closestMatch) + (char) 27 + "[0m");
+				LOGGER.info((char) 27 + "[33mMatched with pattern: " + (char) 27 + "[0m");
+				printTrack(closestMatch);
 			}
 		}
 	}
@@ -137,16 +151,13 @@ public class TrackRecognizerActor extends UntypedActor {
 		if (matcher.match()) {
 			PossibleTrackMatch match = matcher.getLastMatch();
 			possibleMatches.add(match);
-			LOGGER.info((char) 27 + "[33mFOUND POSSIBLE TRACK PATTERN: " + printTrack(match) + (char) 27 + "[0m");
 		}
 	}
 
-	private String printTrack(PossibleTrackMatch possibleMatch) {
-		String temp = "\n";
+	private void printTrack(PossibleTrackMatch possibleMatch) {
 		for (RecognitionTrackPart trackPart : possibleMatch.getTrackParts()) {
-			temp = temp + trackPart.toString() + "\n";
+			LOGGER.info((char) 27 + "[33m" + trackPart + (char) 27 + "[0m");
 		}
-		return temp;
 	}
 
 	private Direction getNewDirection(double gyrzValue, double gyrzStdDev) {
@@ -154,7 +165,16 @@ public class TrackRecognizerActor extends UntypedActor {
 	}
 
 	private RecognitionTrackPart createTrackPart(Direction direction, long startTime, long endTime) {
-		return new RecognitionTrackPart(direction, startTime, endTime);
+		RecognitionTrackPart trackPart = new RecognitionTrackPart(direction, startTime, endTime);
+		addVelocityBarriersToTrackPart(trackPart);
+		return trackPart;
+	}
+
+	private void addVelocityBarriersToTrackPart(RecognitionTrackPart trackPart) {
+		for (RecognitionVelocityBarrier barrier : tempVelocityBarriers) {
+			trackPart.addVelocityBarrier(barrier);
+		}
+		tempVelocityBarriers.clear();
 	}
 
 	private boolean hasDirectionChanged(Direction currentDirection) {
