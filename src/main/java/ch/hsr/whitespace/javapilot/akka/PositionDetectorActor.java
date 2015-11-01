@@ -58,7 +58,6 @@ public class PositionDetectorActor extends UntypedActor {
 	private void handlePenalty(PenaltyMessage message) {
 		LOGGER.warn("PENALTY[" + System.currentTimeMillis() + "]: actualSpeed=" + message.getActualSpeed() + ", speedlimit=" + message.getSpeedLimit() + ", penalty_ms="
 				+ message.getPenalty_ms() + ", racetrack=" + message.getRaceTrack() + ", barrier=" + message.getBarrier());
-		currentTrackPart.addPenalty(System.currentTimeMillis());
 	}
 
 	private void handleAccelerateMessage(PowerChangeMessage accelerateMessage) {

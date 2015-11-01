@@ -15,13 +15,12 @@ public class DrivingTrackPart {
 	private long localStartTime;
 	private long localEndTime;
 	private Power currentPower;
-	private boolean hasPenalty = false;
-	private List<Long> penaltyTimestamps;
+	private List<DrivingVelocityBarrier> velocityBarriers;
 
 	public DrivingTrackPart(int id, Direction direction) {
 		this.id = id;
 		this.direction = direction;
-		this.penaltyTimestamps = new ArrayList<>();
+		this.velocityBarriers = new ArrayList<>();
 	}
 
 	public DrivingTrackPart(int id, Direction direction, long startTime, long endTime) {
@@ -94,13 +93,9 @@ public class DrivingTrackPart {
 		this.currentPower = new Power(currentPower.getValue());
 	}
 
-	public void addPenalty(long timestamp) {
-		penaltyTimestamps.add(timestamp);
-		hasPenalty = true;
-	}
-
-	public boolean hasPenalty() {
-		return hasPenalty;
+	public void setVelocityBarriers(List<DrivingVelocityBarrier> barriers) {
+		this.velocityBarriers.clear();
+		this.velocityBarriers.addAll(barriers);
 	}
 
 	@Override

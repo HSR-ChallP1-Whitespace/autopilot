@@ -60,6 +60,10 @@ public class RecognitionTrackPart {
 		this.velocityBarriers.add(barrier);
 	}
 
+	public List<RecognitionVelocityBarrier> getVelocityBarriers() {
+		return new ArrayList<>(this.velocityBarriers);
+	}
+
 	private void calculateBarrierPosition(RecognitionVelocityBarrier barrier) {
 		double barrierTimeStamp = barrier.getTimestamp() - startTime;
 		double endTimeStamp = endTime - startTime;

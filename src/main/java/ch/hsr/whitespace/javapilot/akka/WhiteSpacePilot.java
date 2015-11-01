@@ -1,8 +1,5 @@
 package ch.hsr.whitespace.javapilot.akka;
 
-import java.util.ArrayList;
-import java.util.List;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -19,9 +16,8 @@ import ch.hsr.whitespace.javapilot.akka.messages.PowerChangeMessage;
 import ch.hsr.whitespace.javapilot.akka.messages.TrackRecognitionFinished;
 import ch.hsr.whitespace.javapilot.config.PilotProperties;
 import ch.hsr.whitespace.javapilot.model.Power;
+import ch.hsr.whitespace.javapilot.model.converter.TrackPartConverter;
 import ch.hsr.whitespace.javapilot.model.track.Direction;
-import ch.hsr.whitespace.javapilot.model.track.driving.DrivingTrackPart;
-import ch.hsr.whitespace.javapilot.model.track.recognition.RecognitionTrackPart;
 
 /**
  * Main Pilot-Actor
@@ -91,21 +87,7 @@ public class WhiteSpacePilot extends UntypedActor {
 	private void handleTrackRecognitionFinished(TrackRecognitionFinished message) {
 		trackRecognitionFinished = true;
 		trackRecognizerActor.tell(PoisonPill.getInstance(), getSelf());
-		positionDetectorActor.tell(new InitializePositionDetection(initializeTrackParts4PositionDetector(message.getTrackParts())), getSelf());
-	}
-
-	private List<DrivingTrackPart> initializeTrackParts4PositionDetector(List<RecognitionTrackPart> recognizerParts) {
-		List<DrivingTrackPart> parts4PositionDetector = new ArrayList<>();
-		int idCounter = 1;
-		for (RecognitionTrackPart part : recognizerParts) {
-			DrivingTrackPart partCopy = new DrivingTrackPart(idCounter, part.getDirection());
-			partCopy.setCurrentPower(new Power(properties.getInitialPower()));
-			partCopy.setStartTime(part.getStartTime());
-			partCopy.setEndTime(part.getEndTime());
-			parts4PositionDetector.add(partCopy);
-			idCounter++;
-		}
-		return parts4PositionDetector;
+		positionDetectorActor.tell(new InitializePositionDetection(TrackPartConverter.convertTrackParts(message.getTrackParts(), properties.getInitialPower())), getSelf());
 	}
 
 	private void handleSensorEvent(SensorEvent event) {
