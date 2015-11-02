@@ -34,7 +34,7 @@ public class TrackPartMatcher {
 				return false;
 			}
 		}
-		lastMatch = new PossibleTrackMatch(list1);
+		lastMatch = new PossibleTrackMatch(list2);
 		return true;
 	}
 

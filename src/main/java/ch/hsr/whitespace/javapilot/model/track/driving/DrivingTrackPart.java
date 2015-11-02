@@ -16,6 +16,8 @@ public class DrivingTrackPart {
 	private long localEndTime;
 	private Power currentPower;
 	private List<DrivingVelocityBarrier> velocityBarriers;
+	private DrivingVelocityBarrier lastVelocityBarrier;
+	private int lastVelocityBarrierIndex = 0;
 
 	public DrivingTrackPart(int id, Direction direction) {
 		this.id = id;
@@ -89,6 +91,10 @@ public class DrivingTrackPart {
 		return currentPower;
 	}
 
+	public List<DrivingVelocityBarrier> getVelocityBarriers() {
+		return new ArrayList<>(velocityBarriers);
+	}
+
 	public void setCurrentPower(Power currentPower) {
 		this.currentPower = new Power(currentPower.getValue());
 	}
@@ -96,6 +102,42 @@ public class DrivingTrackPart {
 	public void setVelocityBarriers(List<DrivingVelocityBarrier> barriers) {
 		this.velocityBarriers.clear();
 		this.velocityBarriers.addAll(barriers);
+	}
+
+	public void passedVelocityBarrier() throws WrongTrackPartException {
+		if ((velocityBarriers.size() - 1) < lastVelocityBarrierIndex)
+			throw new WrongTrackPartException();
+
+		lastVelocityBarrier = velocityBarriers.get(lastVelocityBarrierIndex);
+		increaseVelocityBarrierIndex();
+	}
+
+	private void increaseVelocityBarrierIndex() {
+		if (lastVelocityBarrierIndex == (velocityBarriers.size() - 1)) {
+			lastVelocityBarrierIndex = 0;
+		} else {
+			lastVelocityBarrierIndex++;
+		}
+	}
+
+	public void handlePenalty(double penaltySpeed, double maximumSpeed) {
+		lastVelocityBarrier.setHasPenalty(true);
+		lastVelocityBarrier.setPenaltySpeed(penaltySpeed);
+		lastVelocityBarrier.setMaximumSpeed(maximumSpeed);
+		lastVelocityBarrier.setPowerAtPenalty(currentPower.getValue());
+		currentPower = currentPower.reduce(5);
+	}
+
+	public boolean hasPenalty() {
+		for (DrivingVelocityBarrier barrier : velocityBarriers) {
+			if (barrier.hasPenalty())
+				return true;
+		}
+		return false;
+	}
+
+	public boolean hasBarrier() {
+		return velocityBarriers.size() > 0;
 	}
 
 	@Override

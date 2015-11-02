@@ -1,5 +1,6 @@
 package ch.hsr.whitespace.javapilot.akka;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
@@ -9,6 +10,7 @@ import org.slf4j.LoggerFactory;
 
 import com.zuehlke.carrera.relayapi.messages.PenaltyMessage;
 import com.zuehlke.carrera.relayapi.messages.SensorEvent;
+import com.zuehlke.carrera.relayapi.messages.VelocityMessage;
 import com.zuehlke.carrera.timeseries.FloatingHistory;
 
 import akka.actor.ActorRef;
@@ -19,6 +21,8 @@ import ch.hsr.whitespace.javapilot.akka.messages.InitializePositionDetection;
 import ch.hsr.whitespace.javapilot.akka.messages.PowerChangeMessage;
 import ch.hsr.whitespace.javapilot.model.track.Direction;
 import ch.hsr.whitespace.javapilot.model.track.driving.DrivingTrackPart;
+import ch.hsr.whitespace.javapilot.model.track.driving.DrivingVelocityBarrier;
+import ch.hsr.whitespace.javapilot.model.track.driving.WrongTrackPartException;
 
 public class PositionDetectorActor extends UntypedActor {
 
@@ -28,6 +32,9 @@ public class PositionDetectorActor extends UntypedActor {
 	private DrivingTrackPart currentTrackPart;
 	private int currentTrackPartId = 1;
 	private FloatingHistory smoothedValues;
+	private List<DrivingVelocityBarrier> barriers;
+	private Map<Integer, DrivingTrackPart> barrierIndexToTrackPartMap;
+	private int lastBarrierIndex = 0;
 
 	private long trackPartEntryTime = 0;
 	private long trackPartEntryTimeLocal = 0;
@@ -45,19 +52,42 @@ public class PositionDetectorActor extends UntypedActor {
 	public void onReceive(Object message) throws Exception {
 		if (message instanceof InitializePositionDetection) {
 			initializeTrackPartMap(((InitializePositionDetection) message).getTrackParts());
+			initializeBarriers();
 			currentTrackPart = trackParts.get(currentTrackPartId);
 		} else if (message instanceof PowerChangeMessage) {
 			handleAccelerateMessage((PowerChangeMessage) message);
 		} else if (message instanceof SensorEvent && trackParts != null) {
 			handleSensorEvent((SensorEvent) message);
+		} else if (message instanceof VelocityMessage) {
+			handleVelocityMessage((VelocityMessage) message);
 		} else if (message instanceof PenaltyMessage) {
 			handlePenalty((PenaltyMessage) message);
+		}
+	}
+
+	private void handleVelocityMessage(VelocityMessage message) {
+		try {
+			currentTrackPart = barrierIndexToTrackPartMap.get(lastBarrierIndex);
+			currentTrackPartId = currentTrackPart.getId();
+			incrementBarrierIndex();
+			currentTrackPart.passedVelocityBarrier();
+		} catch (WrongTrackPartException e) {
+			LOGGER.error(e.getMessage());
+		}
+	}
+
+	private void incrementBarrierIndex() {
+		if (lastBarrierIndex == (barriers.size() - 1)) {
+			lastBarrierIndex = 0;
+		} else {
+			lastBarrierIndex++;
 		}
 	}
 
 	private void handlePenalty(PenaltyMessage message) {
 		LOGGER.warn("PENALTY[" + System.currentTimeMillis() + "]: actualSpeed=" + message.getActualSpeed() + ", speedlimit=" + message.getSpeedLimit() + ", penalty_ms="
 				+ message.getPenalty_ms() + ", racetrack=" + message.getRaceTrack() + ", barrier=" + message.getBarrier());
+		currentTrackPart.handlePenalty(message.getActualSpeed(), message.getSpeedLimit());
 	}
 
 	private void handleAccelerateMessage(PowerChangeMessage accelerateMessage) {
@@ -143,6 +173,19 @@ public class PositionDetectorActor extends UntypedActor {
 	private void initializeTrackPartMap(List<DrivingTrackPart> trackParts) {
 		for (DrivingTrackPart trackPart : trackParts) {
 			this.trackParts.put(trackPart.getId(), trackPart);
+		}
+	}
+
+	private void initializeBarriers() {
+		barriers = new ArrayList<>();
+		barrierIndexToTrackPartMap = new TreeMap<>();
+		int index = 0;
+		for (DrivingTrackPart trackPart : trackParts.values()) {
+			for (DrivingVelocityBarrier barrier : trackPart.getVelocityBarriers()) {
+				barriers.add(barrier);
+				barrierIndexToTrackPartMap.put(index, trackPart);
+				index++;
+			}
 		}
 	}
 }
