@@ -125,7 +125,7 @@ public class DrivingTrackPart {
 		lastVelocityBarrier.setPenaltySpeed(penaltySpeed);
 		lastVelocityBarrier.setMaximumSpeed(maximumSpeed);
 		lastVelocityBarrier.setPowerAtPenalty(currentPower.getValue());
-		currentPower = currentPower.reduce(5);
+		currentPower = currentPower.reduce(10);
 	}
 
 	public boolean hasPenalty() {

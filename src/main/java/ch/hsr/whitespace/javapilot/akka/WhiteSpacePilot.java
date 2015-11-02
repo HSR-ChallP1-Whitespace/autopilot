@@ -26,6 +26,8 @@ import ch.hsr.whitespace.javapilot.model.track.driving.DrivingTrackPart;
  */
 public class WhiteSpacePilot extends UntypedActor {
 
+	private static final long MIN_STRAIGHT_DURATION_FOR_SPEEDUP = 400;
+
 	private final Logger LOGGER = LoggerFactory.getLogger(WhiteSpacePilot.class);
 
 	private PilotProperties properties;
@@ -70,7 +72,7 @@ public class WhiteSpacePilot extends UntypedActor {
 	private Power calculateIncreasedPower(DirectionChanged message) {
 		DrivingTrackPart trackPart = message.getTrackPart();
 		if (trackPart.getDirection() == Direction.STRAIGHT) {
-			if (!trackPart.hasPenalty())
+			if (!trackPart.hasPenalty() && trackPart.getDuration() > MIN_STRAIGHT_DURATION_FOR_SPEEDUP)
 				return trackPart.getCurrentPower().increase(10);
 			else
 				return trackPart.getCurrentPower();
