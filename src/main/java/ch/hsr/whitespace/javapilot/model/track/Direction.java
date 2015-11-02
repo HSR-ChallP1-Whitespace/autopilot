@@ -4,9 +4,9 @@ public enum Direction {
 
 	LEFT, RIGHT, STRAIGHT;
 
-	private static final int GYR_Z_STRAIGHT_STD_DEV_THRESHOLD = 900;
-	private static final int GYR_Z_LEFT_THRESHOLD = -500;
-	private static final int GYR_Z_RIGHT_THRESHOLD = 500;
+	private static final double GYR_Z_STRAIGHT_STD_DEV_THRESHOLD = 600.00;
+	private static final double GYR_Z_LEFT_THRESHOLD = -500.00;
+	private static final double GYR_Z_RIGHT_THRESHOLD = 500.00;
 
 	@Override
 	public String toString() {
