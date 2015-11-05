@@ -4,6 +4,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.zuehlke.carrera.javapilot.akka.PowerAction;
+import com.zuehlke.carrera.relayapi.messages.RaceStartMessage;
 import com.zuehlke.carrera.relayapi.messages.SensorEvent;
 
 import akka.actor.ActorRef;
@@ -58,9 +59,15 @@ public class WhiteSpacePilot extends UntypedActor {
 			handleTrackRecognitionFinished((TrackRecognitionFinished) message);
 		} else if (message instanceof DirectionChanged) {
 			handleDirectionChanged((DirectionChanged) message);
+		} else if (message instanceof RaceStartMessage) {
+			handleRaceStart((RaceStartMessage) message);
 		} else {
 			unhandled(message);
 		}
+	}
+
+	private void handleRaceStart(RaceStartMessage message) {
+		Direction.initialize4TrackRecognition();
 	}
 
 	private void handleDirectionChanged(DirectionChanged message) {
@@ -96,6 +103,7 @@ public class WhiteSpacePilot extends UntypedActor {
 		trackRecognitionFinished = true;
 		trackRecognizerActor.tell(PoisonPill.getInstance(), getSelf());
 		positionDetectorActor.tell(new InitializePositionDetection(TrackPartConverter.convertTrackParts(message.getTrackParts(), properties.getInitialPower())), getSelf());
+		Direction.configure4Driving();
 	}
 
 	private void handleSensorEvent(SensorEvent event) {

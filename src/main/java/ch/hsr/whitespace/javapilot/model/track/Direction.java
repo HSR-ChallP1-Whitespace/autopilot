@@ -4,9 +4,10 @@ public enum Direction {
 
 	LEFT, RIGHT, STRAIGHT;
 
-	private static final double GYR_Z_STRAIGHT_STD_DEV_THRESHOLD = 600.00;
 	private static final double GYR_Z_LEFT_THRESHOLD = -500.00;
 	private static final double GYR_Z_RIGHT_THRESHOLD = 500.00;
+
+	private static double straightStdDevThreshold = 900.00;
 
 	@Override
 	public String toString() {
@@ -26,10 +27,18 @@ public enum Direction {
 			return Direction.RIGHT;
 		} else if (gyrzValue < GYR_Z_LEFT_THRESHOLD) {
 			return Direction.LEFT;
-		} else if (gyrzStdDev < GYR_Z_STRAIGHT_STD_DEV_THRESHOLD) {
+		} else if (gyrzStdDev < straightStdDevThreshold) {
 			return Direction.STRAIGHT;
 		}
 		return currentDirection;
+	}
+
+	public static void initialize4TrackRecognition() {
+		straightStdDevThreshold = 900.00;
+	}
+
+	public static void configure4Driving() {
+		straightStdDevThreshold = 600.00;
 	}
 
 }
