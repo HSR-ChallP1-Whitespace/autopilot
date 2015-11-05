@@ -21,3 +21,6 @@ target/
 .idea/
 *.iml
 /.apt_generated/
+
+# race data logs
+/race_data

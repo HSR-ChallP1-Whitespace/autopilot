@@ -188,6 +188,7 @@ public class JavaPilotActor extends UntypedActor {
 
 	private void handleRaceStop(RaceStopMessage message) {
 		LOGGER.info("received race stop");
+		raceTimesEntryPoint.forward(message, getContext());
 	}
 
 	private void handleRaceStart(RaceStartMessage message) {

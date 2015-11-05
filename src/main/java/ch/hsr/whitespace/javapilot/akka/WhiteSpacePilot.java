@@ -37,6 +37,7 @@ public class WhiteSpacePilot extends UntypedActor {
 	private ActorRef dataAnalyzerActor;
 	private ActorRef trackRecognizerActor;
 	private ActorRef positionDetectorActor;
+	private ActorRef dataSerializerActor;
 	private boolean trackRecognitionFinished = false;
 	private Power currentPower;
 
@@ -89,6 +90,7 @@ public class WhiteSpacePilot extends UntypedActor {
 
 	private void forwardMessagesToChildren(Object message) {
 		dataAnalyzerActor.forward(message, getContext());
+		dataSerializerActor.forward(message, getContext());
 		if (!isTrackRecognitionFinished())
 			trackRecognizerActor.forward(message, getContext());
 		if (isTrackRecognitionFinished())
@@ -123,5 +125,6 @@ public class WhiteSpacePilot extends UntypedActor {
 		this.dataAnalyzerActor = getContext().actorOf(Props.create(DataAnalyzerActor.class));
 		this.trackRecognizerActor = getContext().actorOf(Props.create(TrackRecognizerActor.class));
 		this.positionDetectorActor = getContext().actorOf(Props.create(PositionDetectorActor.class));
+		this.dataSerializerActor = getContext().actorOf(Props.create(DataSerializerActor.class));
 	}
 }
