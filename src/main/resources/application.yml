@@ -8,15 +8,11 @@ server:       # Note that the port MUST be 80 to work in SC cloud!
 
 javapilot:
     name:           whitespace  # Id of this simulator. Should be unique.
-    accessCode:     FoptzBAK # the access code provided by the race management at registration
-    #name:           starterkit  # Id of this simulator. Should be unique.
-    #accessCode:     starterkit # the access code provided by the race management at registration
-
-    relayUrl:       ws://localhost:8080/ws/rest/messages # Address of relay on local host
-    trainingUrl:    http://localhost:8080/ws/rest/raceTracks/training # URL to start a training
-    rabbitUrl:      localhost
-    initialPower: 120
-    #relayUrl:  ws://relay2.beta.swisscloud.io/ws/rest/messages # Address of relay in SC cloud !
+    accessCode:     jNSVapmd # the access code provided by the race management at registration
+    relayUrl:       ws://192.168.1.34:8080/ws/rest/messages # Address of relay on local host
+    trainingUrl:    http://192.168.1.34:8080/ws/rest/raceTracks/training # URL to start a training
+    rabbitUrl:      192.168.1.34
+    initialPower:   110
 
 simulator:
   name: embedded  # Id of this simulator
