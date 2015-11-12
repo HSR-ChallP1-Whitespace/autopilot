@@ -16,7 +16,7 @@ public class DataAnalyzerActor extends UntypedActor {
 	private FloatingHistory smoothedValues;
 
 	public DataAnalyzerActor() {
-		smoothedValues = new FloatingHistory(8);
+		smoothedValues = new FloatingHistory(3);
 	}
 
 	public static Props props(ActorRef pilot) {

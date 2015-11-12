@@ -9,15 +9,14 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.zuehlke.carrera.relayapi.messages.PenaltyMessage;
-import com.zuehlke.carrera.relayapi.messages.SensorEvent;
 import com.zuehlke.carrera.relayapi.messages.VelocityMessage;
-import com.zuehlke.carrera.timeseries.FloatingHistory;
 
 import akka.actor.ActorRef;
 import akka.actor.Props;
 import akka.actor.UntypedActor;
-import ch.hsr.whitespace.javapilot.akka.messages.DirectionChanged;
+import ch.hsr.whitespace.javapilot.akka.messages.DirectionChangedMessage;
 import ch.hsr.whitespace.javapilot.akka.messages.InitializePositionDetection;
+import ch.hsr.whitespace.javapilot.akka.messages.PositionChangeMessage;
 import ch.hsr.whitespace.javapilot.akka.messages.PowerChangeMessage;
 import ch.hsr.whitespace.javapilot.model.track.Direction;
 import ch.hsr.whitespace.javapilot.model.track.driving.DrivingTrackPart;
@@ -31,7 +30,6 @@ public class PositionDetectorActor extends UntypedActor {
 	private Map<Integer, DrivingTrackPart> trackParts;
 	private DrivingTrackPart currentTrackPart;
 	private int currentTrackPartId = 1;
-	private FloatingHistory smoothedValues;
 	private List<DrivingVelocityBarrier> barriers;
 	private Map<Integer, DrivingTrackPart> barrierIndexToTrackPartMap;
 	private int lastBarrierIndex = 0;
@@ -44,7 +42,6 @@ public class PositionDetectorActor extends UntypedActor {
 	}
 
 	public PositionDetectorActor() {
-		smoothedValues = new FloatingHistory(8);
 		trackParts = new TreeMap<>();
 	}
 
@@ -56,8 +53,8 @@ public class PositionDetectorActor extends UntypedActor {
 			currentTrackPart = trackParts.get(currentTrackPartId);
 		} else if (message instanceof PowerChangeMessage) {
 			handleAccelerateMessage((PowerChangeMessage) message);
-		} else if (message instanceof SensorEvent && trackParts != null) {
-			handleSensorEvent((SensorEvent) message);
+		} else if (message instanceof DirectionChangedMessage && trackParts != null) {
+			handleDirectionChangedEvent((DirectionChangedMessage) message);
 		} else if (message instanceof VelocityMessage) {
 			handleVelocityMessage((VelocityMessage) message);
 		} else if (message instanceof PenaltyMessage) {
@@ -94,14 +91,10 @@ public class PositionDetectorActor extends UntypedActor {
 		trackParts.get(accelerateMessage.getTrackPartId()).setCurrentPower(accelerateMessage.getPower());
 	}
 
-	private void handleSensorEvent(SensorEvent message) {
-		smoothedValues.shift(message.getG()[2]);
-		Direction newDirection = Direction.getNewDirection(currentTrackPart.getDirection(), smoothedValues.currentMean(), smoothedValues.currentStDev());
-		if (hasDirectionChanged(newDirection)) {
-			updateTrackPartTimestamps(message.getTimeStamp(), System.currentTimeMillis());
-			incrementCurrentTrack(newDirection);
-			handleDirectionChange();
-		}
+	private void handleDirectionChangedEvent(DirectionChangedMessage message) {
+		updateTrackPartTimestamps(message.getTimeStamp(), System.currentTimeMillis());
+		incrementCurrentTrack(message.getNewDirection());
+		handleDirectionChange();
 	}
 
 	private void updateTrackPartTimestamps(long currentTimeStamp, long currentTimeStampLocal) {
@@ -119,15 +112,11 @@ public class PositionDetectorActor extends UntypedActor {
 
 	private void handleDirectionChange() {
 		LOGGER.info("Position: " + getCurrentPositionString());
-		getContext().parent().tell(createDirectionChangedEvent(), getSelf());
+		getContext().parent().tell(createPositionChangedEvent(), getSelf());
 	}
 
-	private DirectionChanged createDirectionChangedEvent() {
-		return new DirectionChanged(currentTrackPart, trackParts.get(getNextTrackPartId()));
-	}
-
-	private boolean hasDirectionChanged(Direction newDirection) {
-		return newDirection != currentTrackPart.getDirection();
+	private PositionChangeMessage createPositionChangedEvent() {
+		return new PositionChangeMessage(currentTrackPart, trackParts.get(getNextTrackPartId()));
 	}
 
 	private void incrementCurrentTrack(Direction newDirection) {

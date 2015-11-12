@@ -7,7 +7,7 @@ public enum Direction {
 	private static final double GYR_Z_LEFT_THRESHOLD = -500.00;
 	private static final double GYR_Z_RIGHT_THRESHOLD = 500.00;
 
-	private static double straightStdDevThreshold = 900.00;
+	private static double straightStdDevThreshold = 400.00;
 
 	@Override
 	public String toString() {
@@ -34,11 +34,11 @@ public enum Direction {
 	}
 
 	public static void initialize4TrackRecognition() {
-		straightStdDevThreshold = 900.00;
+		straightStdDevThreshold = 400.00;
 	}
 
 	public static void configure4Driving() {
-		straightStdDevThreshold = 600.00;
+		straightStdDevThreshold = 400.00;
 	}
 
 }

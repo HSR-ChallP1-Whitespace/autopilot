@@ -40,6 +40,12 @@ public class GyrZGraph {
 		getGraphValue4Time(getRelativeTime(time)).setValueStdDev(value);
 	}
 
+	public void storeGradient(long time, double value) {
+		if (graphValues.isEmpty())
+			setStartTime(time);
+		getGraphValue4Time(getRelativeTime(time)).setGradient(value);
+	}
+
 	private GyrZGraphValue getGraphValue4Time(long time) {
 		if (!graphValues.containsKey(time))
 			graphValues.put(time, new GyrZGraphValue(time));

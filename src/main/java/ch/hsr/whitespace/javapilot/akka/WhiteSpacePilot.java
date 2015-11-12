@@ -11,8 +11,8 @@ import akka.actor.ActorRef;
 import akka.actor.PoisonPill;
 import akka.actor.Props;
 import akka.actor.UntypedActor;
-import ch.hsr.whitespace.javapilot.akka.messages.DirectionChanged;
 import ch.hsr.whitespace.javapilot.akka.messages.InitializePositionDetection;
+import ch.hsr.whitespace.javapilot.akka.messages.PositionChangeMessage;
 import ch.hsr.whitespace.javapilot.akka.messages.PowerChangeMessage;
 import ch.hsr.whitespace.javapilot.akka.messages.TrackRecognitionFinished;
 import ch.hsr.whitespace.javapilot.config.PilotProperties;
@@ -27,7 +27,8 @@ import ch.hsr.whitespace.javapilot.model.track.driving.DrivingTrackPart;
  */
 public class WhiteSpacePilot extends UntypedActor {
 
-	private static final long MIN_STRAIGHT_DURATION_FOR_SPEEDUP = 400;
+	private static final long MIN_STRAIGHT_DURATION_FOR_SPEEDUP = 600;
+	private static final int MAX_CURVE_POWER = 150;
 
 	private final Logger LOGGER = LoggerFactory.getLogger(WhiteSpacePilot.class);
 
@@ -38,6 +39,7 @@ public class WhiteSpacePilot extends UntypedActor {
 	private ActorRef trackRecognizerActor;
 	private ActorRef positionDetectorActor;
 	private ActorRef dataSerializerActor;
+	private ActorRef directionActor;
 	private boolean trackRecognitionFinished = false;
 	private Power currentPower;
 
@@ -58,8 +60,8 @@ public class WhiteSpacePilot extends UntypedActor {
 			handleSensorEvent((SensorEvent) message);
 		} else if (message instanceof TrackRecognitionFinished) {
 			handleTrackRecognitionFinished((TrackRecognitionFinished) message);
-		} else if (message instanceof DirectionChanged) {
-			handleDirectionChanged((DirectionChanged) message);
+		} else if (message instanceof PositionChangeMessage) {
+			handleDirectionChanged((PositionChangeMessage) message);
 		} else if (message instanceof RaceStartMessage) {
 			handleRaceStart((RaceStartMessage) message);
 		} else {
@@ -71,26 +73,29 @@ public class WhiteSpacePilot extends UntypedActor {
 		Direction.initialize4TrackRecognition();
 	}
 
-	private void handleDirectionChanged(DirectionChanged message) {
+	private void handleDirectionChanged(PositionChangeMessage message) {
 		Power increasedPower = calculateIncreasedPower(message);
 		positionDetectorActor.tell(new PowerChangeMessage(message.getTrackPart().getId(), increasedPower), getSelf());
+		dataSerializerActor.tell(new PowerChangeMessage(message.getTrackPart().getId(), increasedPower), getSelf());
 		setCurrentPower(increasedPower);
 	}
 
-	private Power calculateIncreasedPower(DirectionChanged message) {
+	private Power calculateIncreasedPower(PositionChangeMessage message) {
 		DrivingTrackPart trackPart = message.getTrackPart();
 		if (trackPart.getDirection() == Direction.STRAIGHT) {
 			if (!trackPart.hasPenalty() && trackPart.getDuration() > MIN_STRAIGHT_DURATION_FOR_SPEEDUP)
 				return trackPart.getCurrentPower().increase(10);
 			else
 				return trackPart.getCurrentPower();
+		} else {
+			return new Power(Math.min(MAX_CURVE_POWER, currentPower.getValue()));
 		}
-		return currentPower;
 	}
 
 	private void forwardMessagesToChildren(Object message) {
 		dataAnalyzerActor.forward(message, getContext());
 		dataSerializerActor.forward(message, getContext());
+		directionActor.forward(message, getContext());
 		if (!isTrackRecognitionFinished())
 			trackRecognizerActor.forward(message, getContext());
 		if (isTrackRecognitionFinished())
@@ -126,5 +131,6 @@ public class WhiteSpacePilot extends UntypedActor {
 		this.trackRecognizerActor = getContext().actorOf(Props.create(TrackRecognizerActor.class));
 		this.positionDetectorActor = getContext().actorOf(Props.create(PositionDetectorActor.class));
 		this.dataSerializerActor = getContext().actorOf(Props.create(DataSerializerActor.class));
+		this.directionActor = getContext().actorOf(Props.create(DirectionChangeRecognizerActor.class));
 	}
 }

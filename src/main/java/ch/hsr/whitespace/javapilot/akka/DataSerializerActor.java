@@ -32,6 +32,10 @@ public class DataSerializerActor extends UntypedActor {
 
 	private Race race;
 
+	public DataSerializerActor() {
+		race = new Race();
+	}
+
 	public static Props props(ActorRef pilot) {
 		return Props.create(DataSerializerActor.class, () -> new DataSerializerActor());
 	}

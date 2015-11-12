@@ -6,6 +6,7 @@ public class GyrZGraphValue {
 	private double value = 0;
 	private double valueSmoothed = 0;
 	private double valueStdDev = 0;
+	private double gradient;
 
 	public GyrZGraphValue(long time) {
 		this.time = time;
@@ -41,6 +42,14 @@ public class GyrZGraphValue {
 
 	public void setValueStdDev(double valueStdDev) {
 		this.valueStdDev = valueStdDev;
+	}
+
+	public double getGradient() {
+		return gradient;
+	}
+
+	public void setGradient(double gradient) {
+		this.gradient = gradient;
 	}
 
 }
