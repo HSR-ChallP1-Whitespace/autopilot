@@ -12,7 +12,7 @@ javapilot:
     relayUrl:       ws://192.168.1.34:8080/ws/rest/messages # Address of relay on local host
     trainingUrl:    http://192.168.1.34:8080/ws/rest/raceTracks/training # URL to start a training
     rabbitUrl:      192.168.1.34
-    initialPower:   110
+    initialPower:   120
 
 simulator:
   name: embedded  # Id of this simulator
