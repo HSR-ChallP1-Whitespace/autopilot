@@ -1,16 +1,11 @@
 package ch.hsr.whitespace.javapilot.akka;
 
 import java.io.File;
-import java.io.FileOutputStream;
-import java.io.IOException;
 import java.text.SimpleDateFormat;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.fasterxml.jackson.annotation.JsonInclude.Include;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.SerializationFeature;
 import com.zuehlke.carrera.relayapi.messages.PenaltyMessage;
 import com.zuehlke.carrera.relayapi.messages.RaceStartMessage;
 import com.zuehlke.carrera.relayapi.messages.RaceStopMessage;
@@ -23,17 +18,18 @@ import akka.actor.Props;
 import akka.actor.UntypedActor;
 import ch.hsr.whitespace.javapilot.akka.messages.PowerChangeMessage;
 import ch.hsr.whitespace.javapilot.model.data.store.Race;
+import ch.hsr.whitespace.javapilot.util.JSONSerializer;
 
 public class DataSerializerActor extends UntypedActor {
-
-	private static final String RACE_DATA_FOLDER_NAME = "race_data";
 
 	private final Logger LOGGER = LoggerFactory.getLogger(DataSerializerActor.class);
 
 	private Race race;
+	private JSONSerializer serializer;
 
 	public DataSerializerActor() {
 		race = new Race();
+		serializer = new JSONSerializer();
 	}
 
 	public static Props props(ActorRef pilot) {
@@ -69,40 +65,16 @@ public class DataSerializerActor extends UntypedActor {
 	private void stopAndSaveRace(RaceStopMessage message) {
 		SimpleDateFormat timeFormat = new SimpleDateFormat("dd-MM-yyyy_HH-mm-ss");
 		createFolder();
-		File dataFile = new File(RACE_DATA_FOLDER_NAME, "race-data_" + timeFormat.format(race.getStartTime()) + ".json");
+		File dataFile = new File(JSONSerializer.RACE_DATA_FOLDER_NAME, "race-data_" + timeFormat.format(race.getStartTime()) + ".json");
 		LOGGER.info("Stop recording data. Write race data to JSON file... (" + dataFile.getAbsolutePath() + ")");
 		race.setEndTime(message.getTimestamp());
-		serializeData(dataFile);
+		serializer.serializeRace(race, dataFile);
 	}
 
 	private void createFolder() {
-		File folder = new File(RACE_DATA_FOLDER_NAME);
+		File folder = new File(JSONSerializer.RACE_DATA_FOLDER_NAME);
 		if (!folder.exists())
 			folder.mkdirs();
-	}
-
-	private void serializeData(File file) {
-		ObjectMapper mapper = new ObjectMapper();
-		mapper.configure(SerializationFeature.INDENT_OUTPUT, true);
-		mapper.configure(SerializationFeature.ORDER_MAP_ENTRIES_BY_KEYS, true);
-		SimpleDateFormat dateFormat = new SimpleDateFormat("dd.MM.yyyy");
-		mapper.setDateFormat(dateFormat);
-		mapper.setSerializationInclusion(Include.NON_EMPTY);
-		FileOutputStream fileOutputStream = null;
-		try {
-			fileOutputStream = new FileOutputStream(file);
-			mapper.writeValue(fileOutputStream, race);
-		} catch (Exception e) {
-			LOGGER.error(e.getMessage(), e);
-		} finally {
-			if (fileOutputStream != null) {
-				try {
-					fileOutputStream.close();
-				} catch (IOException e) {
-					LOGGER.error(e.getMessage(), e);
-				}
-			}
-		}
 	}
 
 }

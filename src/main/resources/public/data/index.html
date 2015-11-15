@@ -1,103 +1,31 @@
 <!doctype html>
 <html lang="en">
-	<head>
-		<meta charset="utf-8">
-		<title>Whitespace Data Analyzer</title>
-		
-		<script type="text/javascript" src="https://www.google.com/jsapi"></script>
-		<script type="text/javascript" src="//ajax.googleapis.com/ajax/libs/jquery/1.10.2/jquery.min.js"></script>
-		
-		<script type="text/javascript">
-			google.load('visualization', '1', {packages: ['corechart', 'line']});
-			google.setOnLoadCallback(startGraphs);
-			
-			var gyrzDataArray;
-			var roundTimeDataArray;
-			
-			function startGraphs() {
-				loadGYRZData();
-				loadRoundTimeData();
-			}
-			
-			function loadGYRZData() {
-				gyrzDataArray = [];
-				var jsonData = $.ajax({
-					url: '/data/gyrz',
-					dataType: 'json',
-					async: false
-				}).done(function(data) {
-					$.each(data, function() {
-						var item = [this.time, this.value, this.valueSmoothed, this.valueStdDev];
-						gyrzDataArray.push(item);
-					});
-					drawGYRZChart();
-				});
-			}
-			
-			function loadRoundTimeData() {
-				roundTimeDataArray = [];
-				var jsonData = $.ajax({
-					url: '/data/roundtimes',
-					dataType: 'json',
-					async: false
-				}).done(function(data) {
-					$.each(data, function() {
-						var item = [this.round, this.roundTime];
-						roundTimeDataArray.push(item);
-					});
-					drawRoundTimeChart();
-				});
-			}
-			
-			function drawGYRZChart() {
-				var data = new google.visualization.DataTable();
-				data.addColumn('number', 'X');
-				data.addColumn('number', 'GYR-Z');
-				data.addColumn('number', 'GYR-Z-Smoothed');
-				data.addColumn('number', 'GYR-Z-StdDev');
-				data.addRows(gyrzDataArray);
-				
-				var options = {
-					hAxis: {
-						title: 'Time'
-					},
-					vAxis: {
-						title: 'GYR-Z'
-					},
-						backgroundColor: '#f1f8e9'
-				};
+<head>
+	<meta charset="utf-8">
+	<title>Whitespace Data Analyzer</title>
 
-				var chart = new google.visualization.LineChart(document.getElementById('gyrz_chart_div'));
-				chart.draw(data, options);
-			}
-			
-			function drawRoundTimeChart() {
-				var data = new google.visualization.DataTable();
-				data.addColumn('number', 'X');
-				data.addColumn('number', 'Round Time');
-				data.addRows(roundTimeDataArray);
-				
-				var options = {
-					hAxis: {
-						title: 'Time'
-					},
-					vAxis: {
-						title: 'Round Time'
-					},
-						backgroundColor: '#f1f8e9'
-				};
+	<script type="text/javascript" src="https://www.google.com/jsapi"></script>
+	<script type="text/javascript" src="//ajax.googleapis.com/ajax/libs/jquery/2.1.3/jquery.min.js"></script>
+	<script type="text/javascript" src="js/common.js"></script>
+</head>
+<body>
+	<h1>Data Analyzer:</h1>
+	<div>
+		<p>Data source:</p>
+		<select id="urlSelection"></select>
+	</div>
 
-				var chart = new google.visualization.LineChart(document.getElementById('roundtime_chart_div'));
-				chart.draw(data, options);
-			}
-		</script>
-	</head>
-	<body>
-		<h1>Data Analyzer:</h1>
-		<h2>GYR-Z</h2>
-		<div id="gyrz_chart_div"></div>
-		
-		<h2>Round Times</h2>
-		<div id="roundtime_chart_div"></div>
-	</body>
+	<h2>GYR-Z</h2>
+	<div id="gyrz_chart_div"></div>
+
+	<h2>Round Times</h2>
+	<div id="roundtime_chart_div"></div>
+
+	<script type="text/javascript">
+		google.load('visualization', '1', {
+			packages : [ 'corechart', 'line' ]
+		});
+		google.setOnLoadCallback(initPage);
+	</script>
+</body>
 </html>

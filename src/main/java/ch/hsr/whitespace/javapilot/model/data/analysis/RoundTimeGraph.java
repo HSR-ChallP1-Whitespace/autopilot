@@ -32,9 +32,13 @@ public class RoundTimeGraph {
 
 	private static RoundTimeGraph INSTANCE = null;
 
-	public static RoundTimeGraph instance() {
+	public static RoundTimeGraph liveInstance() {
 		if (INSTANCE == null)
 			INSTANCE = new RoundTimeGraph();
 		return INSTANCE;
+	}
+
+	public static RoundTimeGraph createInstance() {
+		return new RoundTimeGraph();
 	}
 }

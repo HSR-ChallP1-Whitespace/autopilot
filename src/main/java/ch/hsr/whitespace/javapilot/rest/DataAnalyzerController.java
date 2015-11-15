@@ -1,7 +1,14 @@
 package ch.hsr.whitespace.javapilot.rest;
 
+import java.io.File;
 import java.util.Collection;
+import java.util.Iterator;
+import java.util.Map;
+import java.util.TreeMap;
 
+import org.apache.commons.io.FileUtils;
+import org.apache.commons.io.filefilter.SuffixFileFilter;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RestController;
@@ -10,27 +17,58 @@ import ch.hsr.whitespace.javapilot.model.data.analysis.GyrZGraph;
 import ch.hsr.whitespace.javapilot.model.data.analysis.GyrZGraphValue;
 import ch.hsr.whitespace.javapilot.model.data.analysis.RoundTimeGraph;
 import ch.hsr.whitespace.javapilot.model.data.analysis.RoundTimeValue;
+import ch.hsr.whitespace.javapilot.model.data.analysis.converter.GyrZGraphFromFileConverter;
+import ch.hsr.whitespace.javapilot.model.data.store.Race;
+import ch.hsr.whitespace.javapilot.util.JSONSerializer;
 
 @RestController
 @RequestMapping("/data/")
 public class DataAnalyzerController {
 
-	private GyrZGraph gyrzGraph;
-	private RoundTimeGraph roundTimeGraph;
+	private GyrZGraph gyrzLiveGraph;
+	private RoundTimeGraph roundTimeLiveGraph;
+	private JSONSerializer jsonSerializer;
 
 	public DataAnalyzerController() {
-		gyrzGraph = GyrZGraph.instance();
-		roundTimeGraph = RoundTimeGraph.instance();
+		gyrzLiveGraph = GyrZGraph.liveInstance();
+		roundTimeLiveGraph = RoundTimeGraph.liveInstance();
+		jsonSerializer = new JSONSerializer();
 	}
 
-	@RequestMapping(value = "/gyrz", method = RequestMethod.GET, produces = "application/json")
+	@RequestMapping(value = "/live/gyrz", method = RequestMethod.GET, produces = "application/json")
 	public Collection<GyrZGraphValue> getG2ZValues() {
-		return gyrzGraph.getData();
+		return gyrzLiveGraph.getData();
 	}
 
-	@RequestMapping(value = "/roundtimes", method = RequestMethod.GET, produces = "application/json")
+	@RequestMapping(value = "/live/roundtimes", method = RequestMethod.GET, produces = "application/json")
 	public Collection<RoundTimeValue> getRoundTimeValues() {
-		return roundTimeGraph.getData();
+		return roundTimeLiveGraph.getData();
+	}
+
+	@RequestMapping(value = "/file/{fileName}/gyrz", method = RequestMethod.GET, produces = "application/json")
+	public Collection<GyrZGraphValue> getG2ZValuesFromFile(@PathVariable String fileName) {
+		Race race = jsonSerializer.deserializeRace(new File(JSONSerializer.RACE_DATA_FOLDER_NAME, fileName));
+		GyrZGraphFromFileConverter converter = new GyrZGraphFromFileConverter(race);
+		return converter.getGyrZGraph().getData();
+	}
+
+	@RequestMapping(value = "/file/{fileName}/roundtimes", method = RequestMethod.GET, produces = "application/json")
+	public Collection<RoundTimeValue> getRoundTimeValuesFromFile(@PathVariable String fileName) {
+		Race race = jsonSerializer.deserializeRace(new File(JSONSerializer.RACE_DATA_FOLDER_NAME, fileName));
+		GyrZGraphFromFileConverter converter = new GyrZGraphFromFileConverter(race);
+		return converter.getRoundTimeGraph().getData();
+	}
+
+	@RequestMapping(value = "/source-urls", method = RequestMethod.GET, produces = "application/json")
+	public Map<String, String> getDataSourceUrls() {
+		Map<String, String> urlMap = new TreeMap<>();
+		urlMap.put("Live", "/live");
+		Iterator<File> fileIterator = FileUtils.iterateFiles(new File(JSONSerializer.RACE_DATA_FOLDER_NAME), new SuffixFileFilter(".json"), null);
+		while (fileIterator.hasNext()) {
+			File file = fileIterator.next();
+			urlMap.put(file.getName(), "/file/" + file.getName());
+		}
+		return urlMap;
 	}
 
 }

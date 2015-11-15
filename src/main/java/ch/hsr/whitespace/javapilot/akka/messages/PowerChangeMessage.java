@@ -7,6 +7,10 @@ public class PowerChangeMessage {
 	private int trackPartId;
 	private Power power;
 
+	public PowerChangeMessage() {
+		super();
+	}
+
 	public PowerChangeMessage(int trackPartId, Power power) {
 		this.power = power;
 		this.trackPartId = trackPartId;

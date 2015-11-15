@@ -35,21 +35,21 @@ public class DataAnalyzerActor extends UntypedActor {
 	}
 
 	private void handleRoundTimeMessage(RoundTimeMessage message) {
-		RoundTimeGraph.instance().storeRoundTime(message.getRoundDuration());
+		RoundTimeGraph.liveInstance().storeRoundTime(message.getRoundDuration());
 	}
 
 	private void handleRaceStart(RaceStartMessage message) {
-		GyrZGraph.instance().reset();
-		RoundTimeGraph.instance().reset();
+		GyrZGraph.liveInstance().reset();
+		RoundTimeGraph.liveInstance().reset();
 	}
 
 	private void handleSensorEvent(SensorEvent event) {
 		double gyrZ = event.getG()[2];
 		smoothedValues.shift(gyrZ);
 
-		GyrZGraph.instance().storeValue(event.getTimeStamp(), gyrZ);
-		GyrZGraph.instance().storeValueSmoothed(event.getTimeStamp(), smoothedValues.currentMean());
-		GyrZGraph.instance().storeValueStdDev(event.getTimeStamp(), smoothedValues.currentStDev());
+		GyrZGraph.liveInstance().storeValue(event.getTimeStamp(), gyrZ);
+		GyrZGraph.liveInstance().storeValueSmoothed(event.getTimeStamp(), smoothedValues.currentMean());
+		GyrZGraph.liveInstance().storeValueStdDev(event.getTimeStamp(), smoothedValues.currentStDev());
 	}
 
 }

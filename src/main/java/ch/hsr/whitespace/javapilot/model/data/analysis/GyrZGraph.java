@@ -70,10 +70,14 @@ public class GyrZGraph {
 
 	private static GyrZGraph INSTANCE = null;
 
-	public static GyrZGraph instance() {
+	public static GyrZGraph liveInstance() {
 		if (INSTANCE == null)
 			INSTANCE = new GyrZGraph();
 		return INSTANCE;
+	}
+
+	public static GyrZGraph createInstance() {
+		return new GyrZGraph();
 	}
 
 }
