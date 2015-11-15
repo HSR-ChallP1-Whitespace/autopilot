@@ -6,7 +6,7 @@ public class GyrZGraphValue {
 	private double value = 0;
 	private double valueSmoothed = 0;
 	private double valueStdDev = 0;
-	private double gradient;
+	private double meanDevFromZero = 0;
 
 	public GyrZGraphValue(long time) {
 		this.time = time;
@@ -44,12 +44,12 @@ public class GyrZGraphValue {
 		this.valueStdDev = valueStdDev;
 	}
 
-	public double getGradient() {
-		return gradient;
+	public double getMeanDevFromZero() {
+		return meanDevFromZero;
 	}
 
-	public void setGradient(double gradient) {
-		this.gradient = gradient;
+	public void setMeanDevFromZero(double meanDevFromZero) {
+		this.meanDevFromZero = meanDevFromZero;
 	}
 
 }

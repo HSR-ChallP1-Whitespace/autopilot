@@ -50,6 +50,7 @@ public class DataAnalyzerActor extends UntypedActor {
 		GyrZGraph.liveInstance().storeValue(event.getTimeStamp(), gyrZ);
 		GyrZGraph.liveInstance().storeValueSmoothed(event.getTimeStamp(), smoothedValues.currentMean());
 		GyrZGraph.liveInstance().storeValueStdDev(event.getTimeStamp(), smoothedValues.currentStDev());
+		GyrZGraph.liveInstance().storeValueMeanDevFromZero(event.getTimeStamp(), smoothedValues.meanDevFromZero());
 	}
 
 }

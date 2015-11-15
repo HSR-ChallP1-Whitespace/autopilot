@@ -40,10 +40,10 @@ public class GyrZGraph {
 		getGraphValue4Time(getRelativeTime(time)).setValueStdDev(value);
 	}
 
-	public void storeGradient(long time, double value) {
+	public void storeValueMeanDevFromZero(long time, double value) {
 		if (graphValues.isEmpty())
 			setStartTime(time);
-		getGraphValue4Time(getRelativeTime(time)).setGradient(value);
+		getGraphValue4Time(getRelativeTime(time)).setMeanDevFromZero(value);
 	}
 
 	private GyrZGraphValue getGraphValue4Time(long time) {

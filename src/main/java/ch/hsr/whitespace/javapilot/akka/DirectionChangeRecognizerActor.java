@@ -36,10 +36,9 @@ public class DirectionChangeRecognizerActor extends UntypedActor {
 
 	private void handleSensorEvent(SensorEvent message) {
 		smoothedValues.shift(message.getG()[2]);
-		Direction newDirection = Direction.getNewDirection(currentDirection, smoothedValues.currentMean(), smoothedValues.currentStDev());
+		Direction newDirection = Direction.getNewDirection(currentDirection, smoothedValues.currentMean(), smoothedValues.meanDevFromZero());
 		if (hasDirectionChanged(newDirection)) {
 			currentDirection = newDirection;
-			// LOGGER.info("Direction has changed: " + newDirection);
 			sendDirectionChangeMessage(message.getTimeStamp());
 		}
 	}

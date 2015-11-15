@@ -32,10 +32,12 @@ public class TrackRecognizerActor extends UntypedActor {
 	private long lastDirectionChangeTimeStamp;
 	private List<RecognitionVelocityBarrier> tempVelocityBarriers;
 	private Direction lastDirection;
+	private List<ActorRef> childActors;
 
 	public TrackRecognizerActor() {
 		recognizedTrack = new RecognitionTrack();
 		tempVelocityBarriers = new ArrayList<>();
+		childActors = new ArrayList<>();
 		LOGGER.info("TrackRecognizer initialized");
 	}
 
@@ -46,6 +48,7 @@ public class TrackRecognizerActor extends UntypedActor {
 	@Override
 	public void onReceive(Object message) throws Exception {
 		if (!hasMatched) {
+			forwardMessage(message);
 			if (message instanceof SensorEvent) {
 				if (startTime == 0) {
 					setStartTime((SensorEvent) message);
@@ -118,7 +121,7 @@ public class TrackRecognizerActor extends UntypedActor {
 	}
 
 	private void createActorToCheckPossibleMatch(PossibleTrackMatch match) {
-		getContext().actorOf(Props.create(MatchingTrackPatternActor.class, match));
+		childActors.add(getContext().actorOf(Props.create(MatchingTrackPatternActor.class, match)));
 	}
 
 	private void printTrack(PossibleTrackMatch possibleMatch) {
@@ -138,6 +141,12 @@ public class TrackRecognizerActor extends UntypedActor {
 			trackPart.addVelocityBarrier(barrier);
 		}
 		tempVelocityBarriers.clear();
+	}
+
+	private void forwardMessage(Object message) {
+		for (ActorRef child : childActors) {
+			child.tell(message, getSelf());
+		}
 	}
 
 }

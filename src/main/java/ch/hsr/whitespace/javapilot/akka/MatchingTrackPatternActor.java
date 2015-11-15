@@ -42,8 +42,10 @@ public class MatchingTrackPatternActor extends UntypedActor {
 	private void handleDirectionChanged(DirectionChangedMessage message) {
 		if (matchFailed)
 			return;
-		if (!trackPartIterator.hasNext())
+		if (!trackPartIterator.hasNext()) {
 			handleCorrectMatch();
+			return;
+		}
 
 		RecognitionTrackPart nextPart = trackPartIterator.next();
 		if (!isNextDirectionCorrect(message.getNewDirection(), nextPart)) {
@@ -63,11 +65,7 @@ public class MatchingTrackPatternActor extends UntypedActor {
 	}
 
 	private boolean isNextDirectionCorrect(Direction newDirection, RecognitionTrackPart nextPart) {
-		if (newDirection == nextPart.getDirection()) {
-			LOGGER.info("Direction " + newDirection + "is correct.");
-			return true;
-		}
-		return false;
+		return newDirection == nextPart.getDirection();
 	}
 
 }

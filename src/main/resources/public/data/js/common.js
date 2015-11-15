@@ -41,7 +41,7 @@ function loadGYRZData() {
 		async: false
 	}).done(function(data) {
 		$.each(data, function() {
-			var item = [this.time, this.value, this.valueSmoothed, this.valueStdDev];
+			var item = [this.time, this.value, this.valueSmoothed, this.valueStdDev, this.meanDevFromZero];
 			gyrzDataArray.push(item);
 		});
 		drawGYRZChart();
@@ -69,6 +69,7 @@ function drawGYRZChart() {
 	data.addColumn('number', 'GYR-Z');
 	data.addColumn('number', 'GYR-Z-Smoothed');
 	data.addColumn('number', 'GYR-Z-StdDev');
+	data.addColumn('number', 'GYR-Z-MeanDevFromZero');
 	data.addRows(gyrzDataArray);
 	
 	var options = {
