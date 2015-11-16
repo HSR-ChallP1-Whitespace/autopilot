@@ -18,7 +18,7 @@ import akka.actor.Props;
 import akka.actor.UntypedActor;
 import ch.hsr.whitespace.javapilot.akka.messages.PowerChangeMessage;
 import ch.hsr.whitespace.javapilot.model.data.store.Race;
-import ch.hsr.whitespace.javapilot.util.JSONSerializer;
+import ch.hsr.whitespace.javapilot.persistance.JSONSerializer;
 
 public class DataSerializerActor extends UntypedActor {
 

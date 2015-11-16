@@ -1,4 +1,4 @@
-package ch.hsr.whitespace.javapilot.util;
+package ch.hsr.whitespace.javapilot.algorithms;
 
 import static org.junit.Assert.assertEquals;
 
@@ -7,25 +7,30 @@ import java.util.List;
 
 import org.junit.Test;
 
-import ch.hsr.whitespace.javapilot.util.ListSplittupUtil.DestinationListsMustBeEmptyException;
-import ch.hsr.whitespace.javapilot.util.ListSplittupUtil.ListNotDivisibleThroughTwoException;
+import ch.hsr.whitespace.javapilot.algorithms.ListSplitter;
+import ch.hsr.whitespace.javapilot.algorithms.ListSplitter.DestinationListsMustBeEmptyException;
 
-public class ListSplittupUtilTest {
+public class ListSplitterTest {
 
-	private ListSplittupUtil splitter;
+	private ListSplitter splitter;
 
-	public ListSplittupUtilTest() {
-		this.splitter = new ListSplittupUtil();
+	public ListSplitterTest() {
+		this.splitter = new ListSplitter();
 	}
 
-	@Test(expected = ListNotDivisibleThroughTwoException.class)
-	public void testWithNotDivisibleList() {
+	@Test
+	public void testWithNotEqualLengthLists() {
 		List<String> sourceList = new ArrayList<>();
+		List<String> destinationList1 = new ArrayList<>();
+		List<String> destinationList2 = new ArrayList<>();
 		sourceList.add("One");
 		sourceList.add("Two");
 		sourceList.add("Three");
 
-		splitter.splitListIntoTwoParts(sourceList, new ArrayList<String>(), new ArrayList<String>());
+		splitter.splitListIntoTwoParts(sourceList, destinationList1, destinationList2);
+
+		assertEquals(1, destinationList1.size());
+		assertEquals(2, destinationList2.size());
 	}
 
 	@Test(expected = DestinationListsMustBeEmptyException.class)

@@ -3,18 +3,18 @@ package ch.hsr.whitespace.javapilot.model.track.recognition.matching;
 import java.util.ArrayList;
 import java.util.List;
 
+import ch.hsr.whitespace.javapilot.algorithms.ListSplitter;
 import ch.hsr.whitespace.javapilot.model.track.recognition.RecognitionTrackPart;
-import ch.hsr.whitespace.javapilot.util.ListSplittupUtil;
 
 public class TrackPartMatcher {
 
 	private List<RecognitionTrackPart> trackParts;
-	private ListSplittupUtil listSplitter;
+	private ListSplitter listSplitter;
 	private PossibleTrackMatch lastMatch;
 
 	public TrackPartMatcher(List<RecognitionTrackPart> trackParts) {
 		this.trackParts = trackParts;
-		this.listSplitter = new ListSplittupUtil();
+		this.listSplitter = new ListSplitter();
 	}
 
 	public boolean match() {

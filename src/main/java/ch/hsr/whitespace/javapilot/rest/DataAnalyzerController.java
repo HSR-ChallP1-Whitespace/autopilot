@@ -19,7 +19,7 @@ import ch.hsr.whitespace.javapilot.model.data.analysis.RoundTimeGraph;
 import ch.hsr.whitespace.javapilot.model.data.analysis.RoundTimeValue;
 import ch.hsr.whitespace.javapilot.model.data.analysis.converter.GyrZGraphFromFileConverter;
 import ch.hsr.whitespace.javapilot.model.data.store.Race;
-import ch.hsr.whitespace.javapilot.util.JSONSerializer;
+import ch.hsr.whitespace.javapilot.persistance.JSONSerializer;
 
 @RestController
 @RequestMapping("/data/")

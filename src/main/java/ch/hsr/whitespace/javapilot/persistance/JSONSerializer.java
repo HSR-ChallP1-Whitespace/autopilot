@@ -1,4 +1,4 @@
-package ch.hsr.whitespace.javapilot.util;
+package ch.hsr.whitespace.javapilot.persistance;
 
 import java.io.File;
 import java.io.FileInputStream;

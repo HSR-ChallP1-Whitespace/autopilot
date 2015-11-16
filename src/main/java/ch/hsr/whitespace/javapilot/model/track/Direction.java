@@ -22,12 +22,12 @@ public enum Direction {
 		return super.toString();
 	}
 
-	public static Direction getNewDirection(Direction currentDirection, double gyrzValue, double gyrzStdDev) {
+	public static Direction getNewDirection(Direction currentDirection, double gyrzValue, double gyrzMeanDevFromZero) {
 		if (gyrzValue > GYR_Z_RIGHT_THRESHOLD) {
 			return Direction.RIGHT;
 		} else if (gyrzValue < GYR_Z_LEFT_THRESHOLD) {
 			return Direction.LEFT;
-		} else if (gyrzStdDev <= straightStdDevThreshold) {
+		} else if (gyrzMeanDevFromZero <= straightStdDevThreshold) {
 			return Direction.STRAIGHT;
 		}
 		return currentDirection;

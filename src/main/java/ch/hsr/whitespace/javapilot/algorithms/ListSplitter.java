@@ -1,8 +1,8 @@
-package ch.hsr.whitespace.javapilot.util;
+package ch.hsr.whitespace.javapilot.algorithms;
 
 import java.util.List;
 
-public class ListSplittupUtil {
+public class ListSplitter {
 
 	/**
 	 * Splits list into two lists with same size.
@@ -16,8 +16,6 @@ public class ListSplittupUtil {
 	 * @throws RuntimeException
 	 */
 	public <T> void splitListIntoTwoParts(List<T> source, List<T> destination1, List<T> destination2) throws RuntimeException {
-		if ((source.size() % 2) != 0)
-			throw new ListNotDivisibleThroughTwoException(source.size());
 		if (!destination1.isEmpty() || !destination2.isEmpty())
 			throw new DestinationListsMustBeEmptyException();
 
@@ -26,14 +24,6 @@ public class ListSplittupUtil {
 		}
 		for (int i = (source.size() / 2); i < source.size(); i++) {
 			destination2.add(source.get(i));
-		}
-	}
-
-	public class ListNotDivisibleThroughTwoException extends RuntimeException {
-		private static final long serialVersionUID = 6179290250600286486L;
-
-		public ListNotDivisibleThroughTwoException(int size) {
-			super("A list of size " + size + "is not divisible through 2.");
 		}
 	}
 
