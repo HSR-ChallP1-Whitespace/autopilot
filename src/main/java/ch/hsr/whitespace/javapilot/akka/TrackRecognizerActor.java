@@ -112,13 +112,26 @@ public class TrackRecognizerActor extends UntypedActor {
 	}
 
 	private void search4PossibleTrackMatches() {
+		// track contains at least 4 track parts (4 parts * 2 rounds ==> at
+		// least 8 parts)
+		if (recognizedTrack.getParts().size() < 8)
+			return;
+
 		TrackPartPatternMatcher matcher = new TrackPartPatternMatcherImpl(recognizedTrack.getParts());
-		if (matcher.match() == 0) {
-			PossibleTrackMatch match = matcher.getPossibleMatches().get(1);
-			LOGGER.info((char) 27 + "[33mCheck possible pattern: " + (char) 27 + "[0m");
-			printTrack(match);
-			createActorToCheckPossibleMatch(match);
+		int failure = matcher.match();
+		if (failure == 0) {
+			testPossibleMatch(matcher.getPossibleMatches().get(1));
+		} else if (failure >= 0 && failure <= 2) {
+			for (PossibleTrackMatch possibleMatch : matcher.getPossibleMatches()) {
+				testPossibleMatch(possibleMatch);
+			}
 		}
+	}
+
+	private void testPossibleMatch(PossibleTrackMatch possibleMatch) {
+		LOGGER.info((char) 27 + "[33mCheck possible pattern: " + (char) 27 + "[0m");
+		printTrack(possibleMatch);
+		createActorToCheckPossibleMatch(possibleMatch);
 	}
 
 	private void createActorToCheckPossibleMatch(PossibleTrackMatch match) {

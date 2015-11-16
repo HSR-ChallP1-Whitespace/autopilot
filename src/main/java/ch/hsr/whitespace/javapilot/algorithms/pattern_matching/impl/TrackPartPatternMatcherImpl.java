@@ -21,6 +21,7 @@ public class TrackPartPatternMatcherImpl implements TrackPartPatternMatcher {
 	public TrackPartPatternMatcherImpl(List<RecognitionTrackPart> trackParts) {
 		this.trackParts = trackParts;
 		this.listSplitter = new ListSplitter();
+		this.possibleMatches = new ArrayList<>();
 	}
 
 	@Override
@@ -36,6 +37,8 @@ public class TrackPartPatternMatcherImpl implements TrackPartPatternMatcher {
 		list1 = new ArrayList<RecognitionTrackPart>();
 		list2 = new ArrayList<RecognitionTrackPart>();
 		listSplitter.splitListIntoTwoParts(trackPartList, list1, list2);
+		possibleMatches.add(new PossibleTrackMatch(list1));
+		possibleMatches.add(new PossibleTrackMatch(list2));
 	}
 
 	private String getStringFromPartList(List<RecognitionTrackPart> trackParts) {
