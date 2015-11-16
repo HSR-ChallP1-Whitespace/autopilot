@@ -22,6 +22,18 @@ public enum Direction {
 		return super.toString();
 	}
 
+	public String toShortString() {
+		switch (this) {
+		case LEFT:
+			return "L";
+		case RIGHT:
+			return "R";
+		case STRAIGHT:
+			return "S";
+		}
+		return super.toString();
+	}
+
 	public static Direction getNewDirection(Direction currentDirection, double gyrzValue, double gyrzMeanDevFromZero) {
 		if (gyrzValue > GYR_Z_RIGHT_THRESHOLD) {
 			return Direction.RIGHT;

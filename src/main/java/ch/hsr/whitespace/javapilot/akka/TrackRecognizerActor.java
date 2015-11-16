@@ -15,12 +15,13 @@ import akka.actor.UntypedActor;
 import ch.hsr.whitespace.javapilot.akka.messages.ConfirmTrackMatchMessage;
 import ch.hsr.whitespace.javapilot.akka.messages.DirectionChangedMessage;
 import ch.hsr.whitespace.javapilot.akka.messages.TrackRecognitionFinished;
+import ch.hsr.whitespace.javapilot.algorithms.pattern_matching.TrackPartPatternMatcher;
+import ch.hsr.whitespace.javapilot.algorithms.pattern_matching.impl.TrackPartPatternMatcherImpl;
 import ch.hsr.whitespace.javapilot.model.track.Direction;
 import ch.hsr.whitespace.javapilot.model.track.recognition.RecognitionTrack;
 import ch.hsr.whitespace.javapilot.model.track.recognition.RecognitionTrackPart;
 import ch.hsr.whitespace.javapilot.model.track.recognition.RecognitionVelocityBarrier;
 import ch.hsr.whitespace.javapilot.model.track.recognition.matching.PossibleTrackMatch;
-import ch.hsr.whitespace.javapilot.model.track.recognition.matching.TrackPartMatcher;
 
 public class TrackRecognizerActor extends UntypedActor {
 
@@ -111,9 +112,9 @@ public class TrackRecognizerActor extends UntypedActor {
 	}
 
 	private void search4PossibleTrackMatches() {
-		TrackPartMatcher matcher = new TrackPartMatcher(recognizedTrack.getParts());
-		if (matcher.match()) {
-			PossibleTrackMatch match = matcher.getLastMatch();
+		TrackPartPatternMatcher matcher = new TrackPartPatternMatcherImpl(recognizedTrack.getParts());
+		if (matcher.match() == 0) {
+			PossibleTrackMatch match = matcher.getPossibleMatches().get(1);
 			LOGGER.info((char) 27 + "[33mCheck possible pattern: " + (char) 27 + "[0m");
 			printTrack(match);
 			createActorToCheckPossibleMatch(match);
