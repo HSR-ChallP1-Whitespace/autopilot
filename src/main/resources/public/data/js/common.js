@@ -7,6 +7,10 @@ $(function() {
 		currentUrl = this.value;
 		drawCharts();
 	});
+	
+	$( document ).ready(function() {
+		initPage();
+	});
 });
 
 function initPage() {
@@ -35,6 +39,7 @@ function loadUrls() {
 
 function loadGYRZData() {
 	gyrzDataArray = [];
+	gyrzDataArray.push([null, 'GYR-Z', 'GYR-Z-Smoothed', 'GYR-Z-StdDev', 'GYR-Z-MeanDevFromZero']);
 	var jsonData = $.ajax({
 		url: '/data' + currentUrl + '/gyrz',
 		dataType: 'json',
@@ -50,6 +55,7 @@ function loadGYRZData() {
 
 function loadRoundTimeData() {
 	roundTimeDataArray = [];
+	roundTimeDataArray.push([null, 'Round time']);
 	var jsonData = $.ajax({
 		url: '/data' + currentUrl + '/roundtimes',
 		dataType: 'json',
@@ -64,44 +70,29 @@ function loadRoundTimeData() {
 }
 
 function drawGYRZChart() {
-	var data = new google.visualization.DataTable();
-	data.addColumn('number', 'X');
-	data.addColumn('number', 'GYR-Z');
-	data.addColumn('number', 'GYR-Z-Smoothed');
-	data.addColumn('number', 'GYR-Z-StdDev');
-	data.addColumn('number', 'GYR-Z-MeanDevFromZero');
-	data.addRows(gyrzDataArray);
-	
-	var options = {
-		hAxis: {
-			title: 'Time'
-		},
-		vAxis: {
-			title: 'GYR-Z'
-		},
-			backgroundColor: '#f1f8e9'
-	};
-
-	var chart = new google.visualization.LineChart(document.getElementById('gyrz_chart_div'));
-	chart.draw(data, options);
+	$('#gyrz_chart_div').highcharts({
+		data: {
+            rows: gyrzDataArray
+        },
+        chart: {
+        	type: 'line'
+        },
+        title: {
+            text: 'GYR-Z'
+        }
+	});
 }
 
 function drawRoundTimeChart() {
-	var data = new google.visualization.DataTable();
-	data.addColumn('number', 'X');
-	data.addColumn('number', 'Round Time');
-	data.addRows(roundTimeDataArray);
-	
-	var options = {
-		hAxis: {
-			title: 'Time'
-		},
-		vAxis: {
-			title: 'Round Time'
-		},
-			backgroundColor: '#f1f8e9'
-	};
-
-	var chart = new google.visualization.LineChart(document.getElementById('roundtime_chart_div'));
-	chart.draw(data, options);
+	$('#roundtime_chart_div').highcharts({
+		data: {
+            rows: roundTimeDataArray
+        },
+        chart: {
+        	type: 'line'
+        },
+        title: {
+            text: 'Round Times'
+        }
+	});
 }

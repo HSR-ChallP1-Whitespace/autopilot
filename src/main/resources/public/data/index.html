@@ -4,8 +4,10 @@
 	<meta charset="utf-8">
 	<title>Whitespace Data Analyzer</title>
 
-	<script type="text/javascript" src="https://www.google.com/jsapi"></script>
-	<script type="text/javascript" src="//ajax.googleapis.com/ajax/libs/jquery/2.1.3/jquery.min.js"></script>
+	<script type="text/javascript" src="js/jquery.min.js"></script>
+	<script type="text/javascript" src="js/highcharts/highcharts.js"></script>
+	<script type="text/javascript" src="js/highcharts/modules/data.js"></script>
+	<script type="text/javascript" src="js/highcharts/modules/exporting.js"></script>
 	<script type="text/javascript" src="js/common.js"></script>
 </head>
 <body>
@@ -15,17 +17,7 @@
 		<select id="urlSelection"></select>
 	</div>
 
-	<h2>GYR-Z</h2>
 	<div id="gyrz_chart_div"></div>
-
-	<h2>Round Times</h2>
 	<div id="roundtime_chart_div"></div>
-
-	<script type="text/javascript">
-		google.load('visualization', '1', {
-			packages : [ 'corechart', 'line' ]
-		});
-		google.setOnLoadCallback(initPage);
-	</script>
 </body>
 </html>
