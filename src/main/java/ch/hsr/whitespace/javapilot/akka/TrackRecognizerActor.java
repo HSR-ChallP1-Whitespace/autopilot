@@ -12,8 +12,8 @@ import com.zuehlke.carrera.relayapi.messages.VelocityMessage;
 import akka.actor.ActorRef;
 import akka.actor.Props;
 import akka.actor.UntypedActor;
-import ch.hsr.whitespace.javapilot.akka.messages.ConfirmTrackMatchMessage;
 import ch.hsr.whitespace.javapilot.akka.messages.DirectionChangedMessage;
+import ch.hsr.whitespace.javapilot.akka.messages.MatchingTrackPatternResponseMessage;
 import ch.hsr.whitespace.javapilot.akka.messages.TrackRecognitionFinished;
 import ch.hsr.whitespace.javapilot.algorithms.pattern_matching.TrackPartPatternMatcher;
 import ch.hsr.whitespace.javapilot.algorithms.pattern_matching.impl.TrackPartPatternMatcherImpl;
@@ -58,13 +58,20 @@ public class TrackRecognizerActor extends UntypedActor {
 				handleVelocityMessage((VelocityMessage) message);
 			} else if (message instanceof DirectionChangedMessage) {
 				handleDirectionChanged((DirectionChangedMessage) message);
-			} else if (message instanceof ConfirmTrackMatchMessage) {
-				confirmTrackMatch((ConfirmTrackMatchMessage) message);
+			} else if (message instanceof MatchingTrackPatternResponseMessage) {
+				handleTrackPatternResponse((MatchingTrackPatternResponseMessage) message);
 			}
 		}
 	}
 
-	private void confirmTrackMatch(ConfirmTrackMatchMessage message) {
+	private void handleTrackPatternResponse(MatchingTrackPatternResponseMessage message) {
+		if (message.getPatternConfirmed())
+			confirmTrackMatch(message);
+		else
+			removeTrackPatternMatchingActor(getSender());
+	}
+
+	private void confirmTrackMatch(MatchingTrackPatternResponseMessage message) {
 		hasMatched = true;
 		tellTrackRecognitionFinished(message.getConfirmedMatch());
 		LOGGER.info("Found track pattern!");
@@ -136,6 +143,11 @@ public class TrackRecognizerActor extends UntypedActor {
 
 	private void createActorToCheckPossibleMatch(PossibleTrackMatch match) {
 		childActors.add(getContext().actorOf(Props.create(MatchingTrackPatternActor.class, match)));
+	}
+
+	private void removeTrackPatternMatchingActor(ActorRef sender) {
+		getContext().stop(sender);
+		childActors.remove(sender);
 	}
 
 	private void printTrack(PossibleTrackMatch possibleMatch) {

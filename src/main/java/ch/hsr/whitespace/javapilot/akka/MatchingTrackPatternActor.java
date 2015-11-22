@@ -8,8 +8,8 @@ import org.slf4j.LoggerFactory;
 import akka.actor.ActorRef;
 import akka.actor.Props;
 import akka.actor.UntypedActor;
-import ch.hsr.whitespace.javapilot.akka.messages.ConfirmTrackMatchMessage;
 import ch.hsr.whitespace.javapilot.akka.messages.DirectionChangedMessage;
+import ch.hsr.whitespace.javapilot.akka.messages.MatchingTrackPatternResponseMessage;
 import ch.hsr.whitespace.javapilot.model.track.Direction;
 import ch.hsr.whitespace.javapilot.model.track.recognition.RecognitionTrackPart;
 import ch.hsr.whitespace.javapilot.model.track.recognition.matching.PossibleTrackMatch;
@@ -43,25 +43,19 @@ public class MatchingTrackPatternActor extends UntypedActor {
 		if (matchFailed)
 			return;
 		if (!trackPartIterator.hasNext()) {
-			handleCorrectMatch();
+			sendResponseMessage(true);
 			return;
 		}
 
 		RecognitionTrackPart nextPart = trackPartIterator.next();
 		if (!isNextDirectionCorrect(message.getNewDirection(), nextPart)) {
 			LOGGER.warn("The pattern " + match + " is not correct...");
-			matchFailed = true;
-			stopMySelf();
+			sendResponseMessage(false);
 		}
 	}
 
-	private void handleCorrectMatch() {
-		getContext().parent().tell(new ConfirmTrackMatchMessage(match), getSelf());
-		stopMySelf();
-	}
-
-	private void stopMySelf() {
-		getContext().stop(getSelf());
+	private void sendResponseMessage(boolean patternConfirmed) {
+		getContext().parent().tell(new MatchingTrackPatternResponseMessage(match, patternConfirmed), getSelf());
 	}
 
 	private boolean isNextDirectionCorrect(Direction newDirection, RecognitionTrackPart nextPart) {
