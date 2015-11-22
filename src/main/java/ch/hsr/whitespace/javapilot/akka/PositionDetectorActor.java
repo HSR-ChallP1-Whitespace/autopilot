@@ -139,24 +139,13 @@ public class PositionDetectorActor extends UntypedActor {
 		for (int i = 1; i <= trackParts.size(); i++) {
 			if (i == currentTrackPartId)
 				sb.append((char) 27 + "[35m");
-			sb.append(getDirectionShortCut(trackParts.get(i).getDirection()));
+			sb.append(trackParts.get(i).getDirection().toShortString());
 			sb.append("(" + i + ")");
 			if (i == currentTrackPartId)
 				sb.append((char) 27 + "[0m");
 			sb.append("-");
 		}
 		return sb.toString();
-	}
-
-	private String getDirectionShortCut(Direction direction) {
-		switch (direction) {
-		case LEFT:
-			return "L";
-		case RIGHT:
-			return "R";
-		default:
-			return "S";
-		}
 	}
 
 	private void initializeTrackPartMap(List<DrivingTrackPart> trackParts) {

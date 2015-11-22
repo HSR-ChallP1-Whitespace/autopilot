@@ -13,6 +13,7 @@ import ch.hsr.whitespace.javapilot.akka.messages.MatchingTrackPatternResponseMes
 import ch.hsr.whitespace.javapilot.model.track.Direction;
 import ch.hsr.whitespace.javapilot.model.track.recognition.RecognitionTrackPart;
 import ch.hsr.whitespace.javapilot.model.track.recognition.matching.PossibleTrackMatch;
+import ch.hsr.whitespace.javapilot.util.StringUtil;
 
 public class MatchingTrackPatternActor extends UntypedActor {
 
@@ -22,14 +23,14 @@ public class MatchingTrackPatternActor extends UntypedActor {
 	private Iterator<RecognitionTrackPart> trackPartIterator;
 	private boolean matchFailed = false;
 
-	public MatchingTrackPatternActor(PossibleTrackMatch trackMatch) {
+	public MatchingTrackPatternActor(PossibleTrackMatch trackMatch, Direction currentDirection) {
 		this.match = trackMatch;
 		this.trackPartIterator = match.getTrackParts().iterator();
-		this.trackPartIterator.next();
+		handleNewDirection(currentDirection);
 	}
 
-	public static Props props(ActorRef pilot, PossibleTrackMatch trackMatch) {
-		return Props.create(MatchingTrackPatternActor.class, () -> new MatchingTrackPatternActor(trackMatch));
+	public static Props props(ActorRef pilot, PossibleTrackMatch trackMatch, Direction currentDirection) {
+		return Props.create(MatchingTrackPatternActor.class, () -> new MatchingTrackPatternActor(trackMatch, currentDirection));
 	}
 
 	@Override
@@ -40,6 +41,10 @@ public class MatchingTrackPatternActor extends UntypedActor {
 	}
 
 	private void handleDirectionChanged(DirectionChangedMessage message) {
+		handleNewDirection(message.getNewDirection());
+	}
+
+	private void handleNewDirection(Direction newDirection) {
 		if (matchFailed)
 			return;
 		if (!trackPartIterator.hasNext()) {
@@ -48,8 +53,8 @@ public class MatchingTrackPatternActor extends UntypedActor {
 		}
 
 		RecognitionTrackPart nextPart = trackPartIterator.next();
-		if (!isNextDirectionCorrect(message.getNewDirection(), nextPart)) {
-			LOGGER.warn("The pattern " + match + " is not correct...");
+		if (!isNextDirectionCorrect(newDirection, nextPart)) {
+			LOGGER.warn("The pattern " + StringUtil.getPatternString(match.getTrackParts()) + " is not correct...");
 			sendResponseMessage(false);
 		}
 	}

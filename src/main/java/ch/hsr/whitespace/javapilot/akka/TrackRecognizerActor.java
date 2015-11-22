@@ -22,6 +22,7 @@ import ch.hsr.whitespace.javapilot.model.track.recognition.RecognitionTrack;
 import ch.hsr.whitespace.javapilot.model.track.recognition.RecognitionTrackPart;
 import ch.hsr.whitespace.javapilot.model.track.recognition.RecognitionVelocityBarrier;
 import ch.hsr.whitespace.javapilot.model.track.recognition.matching.PossibleTrackMatch;
+import ch.hsr.whitespace.javapilot.util.StringUtil;
 
 public class TrackRecognizerActor extends UntypedActor {
 
@@ -32,7 +33,7 @@ public class TrackRecognizerActor extends UntypedActor {
 	private RecognitionTrack recognizedTrack;
 	private long lastDirectionChangeTimeStamp;
 	private List<RecognitionVelocityBarrier> tempVelocityBarriers;
-	private Direction lastDirection;
+	private Direction currentDirection;
 	private List<ActorRef> childActors;
 
 	public TrackRecognizerActor() {
@@ -91,17 +92,18 @@ public class TrackRecognizerActor extends UntypedActor {
 	}
 
 	private void handleDirectionChanged(DirectionChangedMessage message) {
+		LOGGER.info("Direction changed: " + message.getNewDirection());
 		if (isFirstDirectionChange()) {
-			lastDirection = message.getNewDirection();
+			currentDirection = message.getNewDirection();
 		} else {
 			saveTrackPart(message);
+			currentDirection = message.getNewDirection();
 			search4PossibleTrackMatches();
-			lastDirection = message.getNewDirection();
 		}
 	}
 
 	private boolean isFirstDirectionChange() {
-		return lastDirection == null;
+		return currentDirection == null;
 	}
 
 	private void tellTrackRecognitionFinished(PossibleTrackMatch match) {
@@ -112,8 +114,7 @@ public class TrackRecognizerActor extends UntypedActor {
 	private void saveTrackPart(DirectionChangedMessage message) {
 		long start = lastDirectionChangeTimeStamp - startTime;
 		long end = message.getTimeStamp() - startTime;
-		RecognitionTrackPart part = createTrackPart(lastDirection, start, end);
-		LOGGER.info(part.toString());
+		RecognitionTrackPart part = createTrackPart(currentDirection, start, end);
 		recognizedTrack.addPart(part);
 		lastDirectionChangeTimeStamp = message.getTimeStamp();
 	}
@@ -136,13 +137,12 @@ public class TrackRecognizerActor extends UntypedActor {
 	}
 
 	private void testPossibleMatch(PossibleTrackMatch possibleMatch) {
-		LOGGER.info((char) 27 + "[33mCheck possible pattern: " + (char) 27 + "[0m");
-		printTrack(possibleMatch);
+		LOGGER.info("Check possible pattern: " + StringUtil.getPatternString(possibleMatch.getTrackParts()));
 		createActorToCheckPossibleMatch(possibleMatch);
 	}
 
 	private void createActorToCheckPossibleMatch(PossibleTrackMatch match) {
-		childActors.add(getContext().actorOf(Props.create(MatchingTrackPatternActor.class, match)));
+		childActors.add(getContext().actorOf(Props.create(MatchingTrackPatternActor.class, match, currentDirection)));
 	}
 
 	private void removeTrackPatternMatchingActor(ActorRef sender) {
