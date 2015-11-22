@@ -3,20 +3,20 @@ package ch.hsr.whitespace.javapilot.akka;
 import com.zuehlke.carrera.relayapi.messages.RaceStartMessage;
 import com.zuehlke.carrera.relayapi.messages.RoundTimeMessage;
 import com.zuehlke.carrera.relayapi.messages.SensorEvent;
-import com.zuehlke.carrera.timeseries.FloatingHistory;
 
 import akka.actor.ActorRef;
 import akka.actor.Props;
 import akka.actor.UntypedActor;
+import ch.hsr.whitespace.javapilot.algorithms.MovingAverages;
 import ch.hsr.whitespace.javapilot.model.data.analysis.GyrZGraph;
 import ch.hsr.whitespace.javapilot.model.data.analysis.RoundTimeGraph;
 
 public class DataAnalyzerActor extends UntypedActor {
 
-	private FloatingHistory smoothedValues;
+	private MovingAverages movingAverages;
 
 	public DataAnalyzerActor() {
-		smoothedValues = new FloatingHistory(3);
+		movingAverages = new MovingAverages();
 	}
 
 	public static Props props(ActorRef pilot) {
@@ -45,12 +45,8 @@ public class DataAnalyzerActor extends UntypedActor {
 
 	private void handleSensorEvent(SensorEvent event) {
 		double gyrZ = event.getG()[2];
-		smoothedValues.shift(gyrZ);
-
-		GyrZGraph.liveInstance().storeValue(event.getTimeStamp(), gyrZ);
-		GyrZGraph.liveInstance().storeValueSmoothed(event.getTimeStamp(), smoothedValues.currentMean());
-		GyrZGraph.liveInstance().storeValueStdDev(event.getTimeStamp(), smoothedValues.currentStDev());
-		GyrZGraph.liveInstance().storeValueMeanDevFromZero(event.getTimeStamp(), smoothedValues.meanDevFromZero());
+		movingAverages.shift(gyrZ);
+		GyrZGraph.liveInstance().storeValues(event.getTimeStamp(), gyrZ, movingAverages);
 	}
 
 }

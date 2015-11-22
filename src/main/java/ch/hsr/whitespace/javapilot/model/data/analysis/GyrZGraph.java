@@ -4,6 +4,8 @@ import java.util.Collection;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
+import ch.hsr.whitespace.javapilot.algorithms.MovingAverages;
+
 public class GyrZGraph {
 
 	private static final int MAX_STORED_VALUES = 2000;
@@ -22,28 +24,14 @@ public class GyrZGraph {
 		};
 	}
 
-	public void storeValue(long time, double value) {
+	public void storeValues(long time, double currentValue, MovingAverages averages) {
 		if (graphValues.isEmpty())
 			setStartTime(time);
-		getGraphValue4Time(getRelativeTime(time)).setValue(value);
-	}
-
-	public void storeValueSmoothed(long time, double value) {
-		if (graphValues.isEmpty())
-			setStartTime(time);
-		getGraphValue4Time(getRelativeTime(time)).setValueSmoothed(value);
-	}
-
-	public void storeValueStdDev(long time, double value) {
-		if (graphValues.isEmpty())
-			setStartTime(time);
-		getGraphValue4Time(getRelativeTime(time)).setValueStdDev(value);
-	}
-
-	public void storeValueMeanDevFromZero(long time, double value) {
-		if (graphValues.isEmpty())
-			setStartTime(time);
-		getGraphValue4Time(getRelativeTime(time)).setMeanDevFromZero(value);
+		GyrZGraphValue graphValue4Time = getGraphValue4Time(getRelativeTime(time));
+		graphValue4Time.setValue(currentValue);
+		graphValue4Time.setValueSmoothed(averages.currentMean());
+		graphValue4Time.setValueStdDev(averages.currentStDev());
+		graphValue4Time.setMeanDevFromZero(averages.meanDevFromZero());
 	}
 
 	private GyrZGraphValue getGraphValue4Time(long time) {

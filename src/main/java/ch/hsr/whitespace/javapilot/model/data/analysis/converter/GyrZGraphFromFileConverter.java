@@ -3,6 +3,7 @@ package ch.hsr.whitespace.javapilot.model.data.analysis.converter;
 import com.zuehlke.carrera.relayapi.messages.RoundTimeMessage;
 import com.zuehlke.carrera.relayapi.messages.SensorEvent;
 
+import ch.hsr.whitespace.javapilot.algorithms.MovingAverages;
 import ch.hsr.whitespace.javapilot.model.data.analysis.GyrZGraph;
 import ch.hsr.whitespace.javapilot.model.data.analysis.RoundTimeGraph;
 import ch.hsr.whitespace.javapilot.model.data.store.Race;
@@ -17,8 +18,11 @@ public class GyrZGraphFromFileConverter {
 
 	public GyrZGraph getGyrZGraph() {
 		GyrZGraph graph = GyrZGraph.createInstance();
+		MovingAverages averages = new MovingAverages();
 		for (SensorEvent sensorEvent : race.getSensorEvents()) {
-			graph.storeValue(sensorEvent.getTimeStamp(), sensorEvent.getG()[2]);
+			double value = sensorEvent.getG()[2];
+			averages.shift(value);
+			graph.storeValues(sensorEvent.getTimeStamp(), value, averages);
 		}
 		return graph;
 	}
