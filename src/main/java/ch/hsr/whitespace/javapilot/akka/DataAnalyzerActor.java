@@ -3,6 +3,7 @@ package ch.hsr.whitespace.javapilot.akka;
 import com.zuehlke.carrera.relayapi.messages.RaceStartMessage;
 import com.zuehlke.carrera.relayapi.messages.RoundTimeMessage;
 import com.zuehlke.carrera.relayapi.messages.SensorEvent;
+import com.zuehlke.carrera.relayapi.messages.VelocityMessage;
 
 import akka.actor.ActorRef;
 import akka.actor.Props;
@@ -10,6 +11,7 @@ import akka.actor.UntypedActor;
 import ch.hsr.whitespace.javapilot.algorithms.MovingAverages;
 import ch.hsr.whitespace.javapilot.model.data.analysis.GyrZGraph;
 import ch.hsr.whitespace.javapilot.model.data.analysis.RoundTimeGraph;
+import ch.hsr.whitespace.javapilot.model.data.analysis.VelocityGraph;
 
 public class DataAnalyzerActor extends UntypedActor {
 
@@ -31,7 +33,13 @@ public class DataAnalyzerActor extends UntypedActor {
 			handleRaceStart((RaceStartMessage) message);
 		} else if (message instanceof RoundTimeMessage) {
 			handleRoundTimeMessage((RoundTimeMessage) message);
+		} else if (message instanceof VelocityMessage) {
+			handleVelocityMessage((VelocityMessage) message);
 		}
+	}
+
+	private void handleVelocityMessage(VelocityMessage message) {
+		VelocityGraph.liveInstance().storeVelocity(message.getTimeStamp(), message.getVelocity());
 	}
 
 	private void handleRoundTimeMessage(RoundTimeMessage message) {

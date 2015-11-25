@@ -1,5 +1,6 @@
 var gyrzDataArray;
 var roundTimeDataArray;
+var velocityDataArray;
 var currentUrl;
 
 $(function() {
@@ -21,6 +22,7 @@ function initPage() {
 function drawCharts() {
 	loadGYRZData();
 	loadRoundTimeData();
+	loadVelocityData();
 }
 
 function loadUrls() {
@@ -69,6 +71,22 @@ function loadRoundTimeData() {
 	});
 }
 
+function loadVelocityData() {
+	velocityDataArray = [];
+	velocityDataArray.push([null, 'Velocity']);
+	var jsonData = $.ajax({
+		url: '/data' + currentUrl + '/velocity',
+		dataType: 'json',
+		async: false
+	}).done(function(data) {
+		$.each(data, function() {
+			var item = [this.timestamp, this.velocity];
+			velocityDataArray.push(item);
+		});
+		drawVelocityChart();
+	});
+}
+
 function drawGYRZChart() {
 	$('#gyrz_chart_div').highcharts({
 		data: {
@@ -93,6 +111,20 @@ function drawRoundTimeChart() {
         },
         title: {
             text: 'Round Times'
+        }
+	});
+}
+
+function drawVelocityChart() {
+	$('#velocity_chart_div').highcharts({
+		data: {
+            rows: velocityDataArray
+        },
+        chart: {
+        	type: 'line'
+        },
+        title: {
+            text: 'Velocity'
         }
 	});
 }

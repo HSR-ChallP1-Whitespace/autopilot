@@ -17,6 +17,8 @@ import ch.hsr.whitespace.javapilot.model.data.analysis.GyrZGraph;
 import ch.hsr.whitespace.javapilot.model.data.analysis.GyrZGraphValue;
 import ch.hsr.whitespace.javapilot.model.data.analysis.RoundTimeGraph;
 import ch.hsr.whitespace.javapilot.model.data.analysis.RoundTimeValue;
+import ch.hsr.whitespace.javapilot.model.data.analysis.VelocityGraph;
+import ch.hsr.whitespace.javapilot.model.data.analysis.VelocityValue;
 import ch.hsr.whitespace.javapilot.model.data.analysis.converter.GyrZGraphFromFileConverter;
 import ch.hsr.whitespace.javapilot.model.data.store.Race;
 import ch.hsr.whitespace.javapilot.persistance.JSONSerializer;
@@ -27,11 +29,13 @@ public class DataAnalyzerController {
 
 	private GyrZGraph gyrzLiveGraph;
 	private RoundTimeGraph roundTimeLiveGraph;
+	private VelocityGraph velocityGraph;
 	private JSONSerializer jsonSerializer;
 
 	public DataAnalyzerController() {
 		gyrzLiveGraph = GyrZGraph.liveInstance();
 		roundTimeLiveGraph = RoundTimeGraph.liveInstance();
+		velocityGraph = VelocityGraph.liveInstance();
 		jsonSerializer = new JSONSerializer();
 	}
 
@@ -43,6 +47,11 @@ public class DataAnalyzerController {
 	@RequestMapping(value = "/live/roundtimes", method = RequestMethod.GET, produces = "application/json")
 	public Collection<RoundTimeValue> getRoundTimeValues() {
 		return roundTimeLiveGraph.getData();
+	}
+
+	@RequestMapping(value = "/live/velocity", method = RequestMethod.GET, produces = "application/json")
+	public Collection<VelocityValue> getVelocityValues() {
+		return velocityGraph.getData();
 	}
 
 	@RequestMapping(value = "/file/{fileName}/gyrz", method = RequestMethod.GET, produces = "application/json")
@@ -57,6 +66,13 @@ public class DataAnalyzerController {
 		Race race = jsonSerializer.deserializeRace(new File(JSONSerializer.RACE_DATA_FOLDER_NAME, fileName));
 		GyrZGraphFromFileConverter converter = new GyrZGraphFromFileConverter(race);
 		return converter.getRoundTimeGraph().getData();
+	}
+
+	@RequestMapping(value = "/file/{fileName}/velocity", method = RequestMethod.GET, produces = "application/json")
+	public Collection<VelocityValue> getVelocityValuesFromFile(@PathVariable String fileName) {
+		Race race = jsonSerializer.deserializeRace(new File(JSONSerializer.RACE_DATA_FOLDER_NAME, fileName));
+		GyrZGraphFromFileConverter converter = new GyrZGraphFromFileConverter(race);
+		return converter.getVelocityGraph().getData();
 	}
 
 	@RequestMapping(value = "/source-urls", method = RequestMethod.GET, produces = "application/json")
