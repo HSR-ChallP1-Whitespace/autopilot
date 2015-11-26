@@ -6,29 +6,35 @@ import org.slf4j.LoggerFactory;
 import akka.actor.ActorRef;
 import akka.actor.Props;
 import akka.actor.UntypedActor;
+import ch.hsr.whitespace.javapilot.akka.messages.ChangePowerMessage;
 import ch.hsr.whitespace.javapilot.akka.messages.DirectionChangedMessage;
 import ch.hsr.whitespace.javapilot.akka.messages.LostPositionMessage;
 import ch.hsr.whitespace.javapilot.akka.messages.PrintTrackPositionMessage;
 import ch.hsr.whitespace.javapilot.akka.messages.SetNextTrackPartActorMessage;
 import ch.hsr.whitespace.javapilot.akka.messages.TrackPartEnteredMessage;
+import ch.hsr.whitespace.javapilot.model.Power;
 import ch.hsr.whitespace.javapilot.model.track.TrackPart;
 
 public class TrackPartDrivingActor extends UntypedActor {
 
 	private final Logger LOGGER = LoggerFactory.getLogger(TrackPartDrivingActor.class);
 
+	private ActorRef pilot;
 	private TrackPart trackPart;
 	private ActorRef nextTrackPartActor;
+	private int currentPower;
 
 	private boolean iAmDriving = false;
 	private long trackPartEntryTime = 0;
 
-	public static Props props(ActorRef pilot, TrackPart trackPart) {
-		return Props.create(TrackPartDrivingActor.class, () -> new TrackPartDrivingActor(trackPart));
+	public static Props props(ActorRef pilot, TrackPart trackPart, int currentPower) {
+		return Props.create(TrackPartDrivingActor.class, () -> new TrackPartDrivingActor(pilot, trackPart, currentPower));
 	}
 
-	public TrackPartDrivingActor(TrackPart trackPart) {
+	public TrackPartDrivingActor(ActorRef pilot, TrackPart trackPart, int currentPower) {
+		this.pilot = pilot;
 		this.trackPart = trackPart;
+		this.currentPower = currentPower;
 	}
 
 	@Override
@@ -51,6 +57,12 @@ public class TrackPartDrivingActor extends UntypedActor {
 		iAmDriving = true;
 		trackPartEntryTime = message.getTimestamp();
 		tellParentToPrintPosition();
+		setPower(currentPower);
+	}
+
+	private void setPower(int power) {
+		currentPower = power;
+		pilot.tell(new ChangePowerMessage(new Power(currentPower)), getSelf());
 	}
 
 	private void sendLostPositionMessage() {

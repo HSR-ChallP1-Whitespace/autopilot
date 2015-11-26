@@ -31,12 +31,14 @@ public class DrivingCoordinatorActor extends UntypedActor {
 	private Map<Integer, TrackPart> barrierIndexToTrackPartMap;
 	private int lastBarrierIndex = 0;
 	private boolean lostPosition = false;
+	private int initialPower;
 
-	public static Props props(ActorRef pilot) {
-		return Props.create(DrivingCoordinatorActor.class, () -> new DrivingCoordinatorActor());
+	public static Props props(ActorRef pilot, int initialPower) {
+		return Props.create(DrivingCoordinatorActor.class, () -> new DrivingCoordinatorActor(initialPower));
 	}
 
-	public DrivingCoordinatorActor() {
+	public DrivingCoordinatorActor(int initialPower) {
+		this.initialPower = initialPower;
 		trackParts = new TreeMap<>();
 		trackPartActors = new TreeMap<>();
 	}
@@ -124,7 +126,7 @@ public class DrivingCoordinatorActor extends UntypedActor {
 	}
 
 	private void createTrackPartActor(int idCounter, TrackPart trackPart) {
-		ActorRef actor = getContext().actorOf(Props.create(TrackPartDrivingActor.class, trackPart));
+		ActorRef actor = getContext().actorOf(Props.create(TrackPartDrivingActor.class, getContext().parent(), trackPart, initialPower));
 		trackPartActors.put(idCounter, actor);
 	}
 

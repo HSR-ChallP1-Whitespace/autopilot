@@ -11,6 +11,7 @@ import akka.actor.ActorRef;
 import akka.actor.PoisonPill;
 import akka.actor.Props;
 import akka.actor.UntypedActor;
+import ch.hsr.whitespace.javapilot.akka.messages.ChangePowerMessage;
 import ch.hsr.whitespace.javapilot.akka.messages.InitializePositionDetection;
 import ch.hsr.whitespace.javapilot.akka.messages.TrackRecognitionFinished;
 import ch.hsr.whitespace.javapilot.config.PilotProperties;
@@ -33,7 +34,7 @@ public class WhiteSpacePilot extends UntypedActor {
 	private ActorRef pilot;
 	private ActorRef dataAnalyzerActor;
 	private ActorRef trackRecognizerActor;
-	private ActorRef positionDetectorActor;
+	private ActorRef drivingCoordinatorActor;
 	private ActorRef dataSerializerActor;
 	private ActorRef directionActor;
 	private boolean trackRecognitionFinished = false;
@@ -58,6 +59,8 @@ public class WhiteSpacePilot extends UntypedActor {
 			handleTrackRecognitionFinished((TrackRecognitionFinished) message);
 		} else if (message instanceof RaceStartMessage) {
 			handleRaceStart((RaceStartMessage) message);
+		} else if (message instanceof ChangePowerMessage) {
+			setCurrentPower(((ChangePowerMessage) message).getNewPower());
 		} else {
 			unhandled(message);
 		}
@@ -92,7 +95,7 @@ public class WhiteSpacePilot extends UntypedActor {
 		if (!isTrackRecognitionFinished())
 			trackRecognizerActor.forward(message, getContext());
 		if (isTrackRecognitionFinished())
-			positionDetectorActor.forward(message, getContext());
+			drivingCoordinatorActor.forward(message, getContext());
 	}
 
 	private boolean isTrackRecognitionFinished() {
@@ -102,7 +105,7 @@ public class WhiteSpacePilot extends UntypedActor {
 	private void handleTrackRecognitionFinished(TrackRecognitionFinished message) {
 		trackRecognitionFinished = true;
 		trackRecognizerActor.tell(PoisonPill.getInstance(), getSelf());
-		positionDetectorActor.tell(new InitializePositionDetection(message.getTrackParts()), getSelf());
+		drivingCoordinatorActor.tell(new InitializePositionDetection(message.getTrackParts()), getSelf());
 		Direction.configure4Driving();
 	}
 
@@ -122,7 +125,7 @@ public class WhiteSpacePilot extends UntypedActor {
 	private void initChildActors() {
 		this.dataAnalyzerActor = getContext().actorOf(Props.create(DataAnalyzerActor.class));
 		this.trackRecognizerActor = getContext().actorOf(Props.create(TrackRecognizerActor.class));
-		this.positionDetectorActor = getContext().actorOf(Props.create(DrivingCoordinatorActor.class));
+		this.drivingCoordinatorActor = getContext().actorOf(Props.create(DrivingCoordinatorActor.class, properties.getInitialPower()));
 		this.dataSerializerActor = getContext().actorOf(Props.create(DataSerializerActor.class));
 		this.directionActor = getContext().actorOf(Props.create(DirectionChangeRecognizerActor.class));
 	}
