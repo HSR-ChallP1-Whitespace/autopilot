@@ -55,6 +55,7 @@ public class PositionDetectorActor extends UntypedActor {
 
 	private void handleVelocityMessage(VelocityMessage message) {
 		currentTrackPart = barrierIndexToTrackPartMap.get(lastBarrierIndex);
+		LOGGER.info("Passed barrier in trackpart '" + currentTrackPartId + "'");
 		currentTrackPartId = currentTrackPart.getId();
 		incrementBarrierIndex();
 	}
@@ -115,8 +116,11 @@ public class PositionDetectorActor extends UntypedActor {
 	}
 
 	private void initializeTrackPartMap(List<TrackPart> trackParts) {
+		int idCounter = 1;
 		for (TrackPart trackPart : trackParts) {
+			trackPart.setId(idCounter);
 			this.trackParts.put(trackPart.getId(), trackPart);
+			idCounter++;
 		}
 	}
 
