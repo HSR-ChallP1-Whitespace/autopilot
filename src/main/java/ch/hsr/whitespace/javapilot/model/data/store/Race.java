@@ -9,8 +9,6 @@ import com.zuehlke.carrera.relayapi.messages.RoundTimeMessage;
 import com.zuehlke.carrera.relayapi.messages.SensorEvent;
 import com.zuehlke.carrera.relayapi.messages.VelocityMessage;
 
-import ch.hsr.whitespace.javapilot.akka.messages.PowerChangeMessage;
-
 public class Race implements Serializable {
 
 	private static final long serialVersionUID = -6459971924626608210L;
@@ -18,14 +16,12 @@ public class Race implements Serializable {
 	private long startTime;
 	private long endTime;
 	private List<SensorEvent> sensorEvents;
-	private List<PowerChangeMessage> powerChanges;
 	private List<PenaltyMessage> penalties;
 	private List<VelocityMessage> velocities;
 	private List<RoundTimeMessage> roundTimes;
 
 	public Race() {
 		this.sensorEvents = new ArrayList<>();
-		this.powerChanges = new ArrayList<>();
 		this.penalties = new ArrayList<>();
 		this.velocities = new ArrayList<>();
 		this.roundTimes = new ArrayList<>();
@@ -53,14 +49,6 @@ public class Race implements Serializable {
 
 	public void setSensorEvents(List<SensorEvent> sensorEvents) {
 		this.sensorEvents = sensorEvents;
-	}
-
-	public List<PowerChangeMessage> getPowerChanges() {
-		return powerChanges;
-	}
-
-	public void setPowerChanges(List<PowerChangeMessage> powerChanges) {
-		this.powerChanges = powerChanges;
 	}
 
 	public List<PenaltyMessage> getPenalties() {

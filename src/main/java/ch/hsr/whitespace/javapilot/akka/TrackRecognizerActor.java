@@ -18,10 +18,10 @@ import ch.hsr.whitespace.javapilot.akka.messages.TrackRecognitionFinished;
 import ch.hsr.whitespace.javapilot.algorithms.pattern_matching.TrackPartPatternMatcher;
 import ch.hsr.whitespace.javapilot.algorithms.pattern_matching.impl.TrackPartPatternMatcherImpl;
 import ch.hsr.whitespace.javapilot.model.track.Direction;
-import ch.hsr.whitespace.javapilot.model.track.recognition.RecognitionTrack;
-import ch.hsr.whitespace.javapilot.model.track.recognition.RecognitionTrackPart;
-import ch.hsr.whitespace.javapilot.model.track.recognition.RecognitionVelocityBarrier;
-import ch.hsr.whitespace.javapilot.model.track.recognition.matching.PossibleTrackMatch;
+import ch.hsr.whitespace.javapilot.model.track.Track;
+import ch.hsr.whitespace.javapilot.model.track.TrackPart;
+import ch.hsr.whitespace.javapilot.model.track.VelocityBarrier;
+import ch.hsr.whitespace.javapilot.model.track.matching.PossibleTrackMatch;
 import ch.hsr.whitespace.javapilot.util.StringUtil;
 
 public class TrackRecognizerActor extends UntypedActor {
@@ -30,14 +30,14 @@ public class TrackRecognizerActor extends UntypedActor {
 
 	private boolean hasMatched = false;
 	private long startTime;
-	private RecognitionTrack recognizedTrack;
+	private Track recognizedTrack;
 	private long lastDirectionChangeTimeStamp;
-	private List<RecognitionVelocityBarrier> tempVelocityBarriers;
+	private List<VelocityBarrier> tempVelocityBarriers;
 	private Direction currentDirection;
 	private List<ActorRef> childActors;
 
 	public TrackRecognizerActor() {
-		recognizedTrack = new RecognitionTrack();
+		recognizedTrack = new Track();
 		tempVelocityBarriers = new ArrayList<>();
 		childActors = new ArrayList<>();
 		LOGGER.info("TrackRecognizer initialized");
@@ -80,7 +80,7 @@ public class TrackRecognizerActor extends UntypedActor {
 	}
 
 	private void handleVelocityMessage(VelocityMessage message) {
-		RecognitionVelocityBarrier barrier = new RecognitionVelocityBarrier();
+		VelocityBarrier barrier = new VelocityBarrier();
 		barrier.setTimestamp(message.getTimeStamp() - startTime);
 		barrier.setVelocity(message.getVelocity());
 		tempVelocityBarriers.add(barrier);
@@ -114,7 +114,7 @@ public class TrackRecognizerActor extends UntypedActor {
 	private void saveTrackPart(DirectionChangedMessage message) {
 		long start = lastDirectionChangeTimeStamp - startTime;
 		long end = message.getTimeStamp() - startTime;
-		RecognitionTrackPart part = createTrackPart(currentDirection, start, end);
+		TrackPart part = createTrackPart(currentDirection, start, end);
 		recognizedTrack.addPart(part);
 		lastDirectionChangeTimeStamp = message.getTimeStamp();
 	}
@@ -151,19 +151,19 @@ public class TrackRecognizerActor extends UntypedActor {
 	}
 
 	private void printTrack(PossibleTrackMatch possibleMatch) {
-		for (RecognitionTrackPart trackPart : possibleMatch.getTrackParts()) {
+		for (TrackPart trackPart : possibleMatch.getTrackParts()) {
 			LOGGER.info((char) 27 + "[33m" + trackPart + (char) 27 + "[0m");
 		}
 	}
 
-	private RecognitionTrackPart createTrackPart(Direction direction, long startTime, long endTime) {
-		RecognitionTrackPart trackPart = new RecognitionTrackPart(direction, startTime, endTime);
+	private TrackPart createTrackPart(Direction direction, long startTime, long endTime) {
+		TrackPart trackPart = new TrackPart(direction, startTime, endTime);
 		addVelocityBarriersToTrackPart(trackPart);
 		return trackPart;
 	}
 
-	private void addVelocityBarriersToTrackPart(RecognitionTrackPart trackPart) {
-		for (RecognitionVelocityBarrier barrier : tempVelocityBarriers) {
+	private void addVelocityBarriersToTrackPart(TrackPart trackPart) {
+		for (VelocityBarrier barrier : tempVelocityBarriers) {
 			trackPart.addVelocityBarrier(barrier);
 		}
 		tempVelocityBarriers.clear();

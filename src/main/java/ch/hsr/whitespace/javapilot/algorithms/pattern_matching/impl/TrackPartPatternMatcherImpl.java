@@ -6,19 +6,19 @@ import java.util.List;
 import ch.hsr.whitespace.javapilot.algorithms.LevenshteinDistance;
 import ch.hsr.whitespace.javapilot.algorithms.ListSplitter;
 import ch.hsr.whitespace.javapilot.algorithms.pattern_matching.TrackPartPatternMatcher;
-import ch.hsr.whitespace.javapilot.model.track.recognition.RecognitionTrackPart;
-import ch.hsr.whitespace.javapilot.model.track.recognition.matching.PossibleTrackMatch;
+import ch.hsr.whitespace.javapilot.model.track.TrackPart;
+import ch.hsr.whitespace.javapilot.model.track.matching.PossibleTrackMatch;
 
 public class TrackPartPatternMatcherImpl implements TrackPartPatternMatcher {
 
-	private List<RecognitionTrackPart> trackParts;
+	private List<TrackPart> trackParts;
 	private ListSplitter listSplitter;
 	private List<PossibleTrackMatch> possibleMatches;
 
-	private List<RecognitionTrackPart> list1;
-	private List<RecognitionTrackPart> list2;
+	private List<TrackPart> list1;
+	private List<TrackPart> list2;
 
-	public TrackPartPatternMatcherImpl(List<RecognitionTrackPart> trackParts) {
+	public TrackPartPatternMatcherImpl(List<TrackPart> trackParts) {
 		this.trackParts = trackParts;
 		this.listSplitter = new ListSplitter();
 		this.possibleMatches = new ArrayList<>();
@@ -33,17 +33,17 @@ public class TrackPartPatternMatcherImpl implements TrackPartPatternMatcher {
 	}
 
 	private void splitList() {
-		List<RecognitionTrackPart> trackPartList = new ArrayList<RecognitionTrackPart>(trackParts);
-		list1 = new ArrayList<RecognitionTrackPart>();
-		list2 = new ArrayList<RecognitionTrackPart>();
+		List<TrackPart> trackPartList = new ArrayList<TrackPart>(trackParts);
+		list1 = new ArrayList<TrackPart>();
+		list2 = new ArrayList<TrackPart>();
 		listSplitter.splitListIntoTwoParts(trackPartList, list1, list2);
 		possibleMatches.add(new PossibleTrackMatch(list1));
 		possibleMatches.add(new PossibleTrackMatch(list2));
 	}
 
-	private String getStringFromPartList(List<RecognitionTrackPart> trackParts) {
+	private String getStringFromPartList(List<TrackPart> trackParts) {
 		StringBuilder sb = new StringBuilder();
-		for (RecognitionTrackPart trackPart : trackParts) {
+		for (TrackPart trackPart : trackParts) {
 			sb.append(trackPart.getDirection().toShortString());
 		}
 		return sb.toString();

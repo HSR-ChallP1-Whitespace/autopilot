@@ -1,6 +1,6 @@
 package ch.hsr.whitespace.javapilot.akka.messages;
 
-import ch.hsr.whitespace.javapilot.model.track.recognition.matching.PossibleTrackMatch;
+import ch.hsr.whitespace.javapilot.model.track.matching.PossibleTrackMatch;
 
 public class MatchingTrackPatternResponseMessage {
 

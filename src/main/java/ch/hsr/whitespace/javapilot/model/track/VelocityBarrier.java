@@ -1,6 +1,6 @@
-package ch.hsr.whitespace.javapilot.model.track.recognition;
+package ch.hsr.whitespace.javapilot.model.track;
 
-public class RecognitionVelocityBarrier {
+public class VelocityBarrier {
 
 	private long timestamp;
 	private double positionInTrackPart;

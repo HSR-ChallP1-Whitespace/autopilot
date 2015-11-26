@@ -2,17 +2,17 @@ package ch.hsr.whitespace.javapilot.akka.messages;
 
 import java.util.List;
 
-import ch.hsr.whitespace.javapilot.model.track.recognition.RecognitionTrackPart;
+import ch.hsr.whitespace.javapilot.model.track.TrackPart;
 
 public class TrackRecognitionFinished {
 
-	public TrackRecognitionFinished(List<RecognitionTrackPart> trackParts) {
+	public TrackRecognitionFinished(List<TrackPart> trackParts) {
 		this.trackParts = trackParts;
 	}
 
-	private List<RecognitionTrackPart> trackParts;
+	private List<TrackPart> trackParts;
 
-	public List<RecognitionTrackPart> getTrackParts() {
+	public List<TrackPart> getTrackParts() {
 		return trackParts;
 	}
 }

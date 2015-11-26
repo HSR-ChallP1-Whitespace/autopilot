@@ -1,26 +1,33 @@
-package ch.hsr.whitespace.javapilot.model.track.recognition;
+package ch.hsr.whitespace.javapilot.model.track;
 
 import java.util.ArrayList;
 import java.util.List;
 
-import ch.hsr.whitespace.javapilot.model.track.Direction;
+public class TrackPart {
 
-public class RecognitionTrackPart {
-
+	private int id;
 	private Direction direction;
 	private long startTime;
 	private long endTime;
-	private List<RecognitionVelocityBarrier> velocityBarriers;
+	private List<VelocityBarrier> velocityBarriers;
 
-	public RecognitionTrackPart(Direction direction) {
+	public TrackPart(Direction direction) {
 		this.direction = direction;
 		this.velocityBarriers = new ArrayList<>();
 	}
 
-	public RecognitionTrackPart(Direction direction, long startTime, long endTime) {
+	public TrackPart(Direction direction, long startTime, long endTime) {
 		this(direction);
 		this.startTime = startTime;
 		this.endTime = endTime;
+	}
+
+	public int getId() {
+		return id;
+	}
+
+	public void setId(int id) {
+		this.id = id;
 	}
 
 	public Direction getDirection() {
@@ -47,7 +54,7 @@ public class RecognitionTrackPart {
 		this.endTime = endTime;
 	}
 
-	public boolean hasSameDirection(RecognitionTrackPart otherTrackPart) {
+	public boolean hasSameDirection(TrackPart otherTrackPart) {
 		return this.direction == otherTrackPart.getDirection();
 	}
 
@@ -55,16 +62,16 @@ public class RecognitionTrackPart {
 		return endTime - startTime;
 	}
 
-	public void addVelocityBarrier(RecognitionVelocityBarrier barrier) {
+	public void addVelocityBarrier(VelocityBarrier barrier) {
 		calculateBarrierPosition(barrier);
 		this.velocityBarriers.add(barrier);
 	}
 
-	public List<RecognitionVelocityBarrier> getVelocityBarriers() {
+	public List<VelocityBarrier> getVelocityBarriers() {
 		return new ArrayList<>(this.velocityBarriers);
 	}
 
-	private void calculateBarrierPosition(RecognitionVelocityBarrier barrier) {
+	private void calculateBarrierPosition(VelocityBarrier barrier) {
 		double barrierTimeStamp = barrier.getTimestamp() - startTime;
 		double endTimeStamp = endTime - startTime;
 		barrier.setPositionInTrackPart(barrierTimeStamp / endTimeStamp);
@@ -74,7 +81,7 @@ public class RecognitionTrackPart {
 	public String toString() {
 		String barriers = "";
 		int counter = 1;
-		for (RecognitionVelocityBarrier barrier : velocityBarriers) {
+		for (VelocityBarrier barrier : velocityBarriers) {
 			barriers += "barrier" + counter + "=" + barrier.getPositionInTrackPart() + ", ";
 			counter++;
 		}
