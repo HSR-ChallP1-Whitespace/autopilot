@@ -45,12 +45,4 @@ public enum Direction {
 		return currentDirection;
 	}
 
-	public static void initialize4TrackRecognition() {
-		straightStdDevThreshold = 200.00;
-	}
-
-	public static void configure4Driving() {
-		straightStdDevThreshold = 200.00;
-	}
-
 }

@@ -2,7 +2,7 @@ package ch.hsr.whitespace.javapilot.algorithms.pattern_matching;
 
 import java.util.List;
 
-import ch.hsr.whitespace.javapilot.model.track.recognition.matching.PossibleTrackMatch;
+import ch.hsr.whitespace.javapilot.model.track.matching.PossibleTrackMatch;
 
 public interface TrackPartPatternMatcher {
 

@@ -11,8 +11,8 @@ import akka.actor.UntypedActor;
 import ch.hsr.whitespace.javapilot.akka.messages.DirectionChangedMessage;
 import ch.hsr.whitespace.javapilot.akka.messages.MatchingTrackPatternResponseMessage;
 import ch.hsr.whitespace.javapilot.model.track.Direction;
-import ch.hsr.whitespace.javapilot.model.track.recognition.RecognitionTrackPart;
-import ch.hsr.whitespace.javapilot.model.track.recognition.matching.PossibleTrackMatch;
+import ch.hsr.whitespace.javapilot.model.track.TrackPart;
+import ch.hsr.whitespace.javapilot.model.track.matching.PossibleTrackMatch;
 import ch.hsr.whitespace.javapilot.util.StringUtil;
 
 public class MatchingTrackPatternActor extends UntypedActor {
@@ -20,7 +20,7 @@ public class MatchingTrackPatternActor extends UntypedActor {
 	private final Logger LOGGER = LoggerFactory.getLogger(MatchingTrackPatternActor.class);
 
 	private PossibleTrackMatch match;
-	private Iterator<RecognitionTrackPart> trackPartIterator;
+	private Iterator<TrackPart> trackPartIterator;
 	private boolean matchFailed = false;
 
 	public MatchingTrackPatternActor(PossibleTrackMatch trackMatch, Direction currentDirection) {
@@ -52,7 +52,7 @@ public class MatchingTrackPatternActor extends UntypedActor {
 			return;
 		}
 
-		RecognitionTrackPart nextPart = trackPartIterator.next();
+		TrackPart nextPart = trackPartIterator.next();
 		if (!isNextDirectionCorrect(newDirection, nextPart)) {
 			LOGGER.warn("The pattern " + StringUtil.getPatternString(match.getTrackParts()) + " is not correct...");
 			sendResponseMessage(false);
@@ -63,7 +63,7 @@ public class MatchingTrackPatternActor extends UntypedActor {
 		getContext().parent().tell(new MatchingTrackPatternResponseMessage(match, patternConfirmed), getSelf());
 	}
 
-	private boolean isNextDirectionCorrect(Direction newDirection, RecognitionTrackPart nextPart) {
+	private boolean isNextDirectionCorrect(Direction newDirection, TrackPart nextPart) {
 		return newDirection == nextPart.getDirection();
 	}
 

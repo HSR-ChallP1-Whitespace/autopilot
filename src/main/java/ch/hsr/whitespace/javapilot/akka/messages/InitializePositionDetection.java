@@ -2,17 +2,17 @@ package ch.hsr.whitespace.javapilot.akka.messages;
 
 import java.util.List;
 
-import ch.hsr.whitespace.javapilot.model.track.driving.DrivingTrackPart;
+import ch.hsr.whitespace.javapilot.model.track.TrackPart;
 
 public class InitializePositionDetection {
 
-	private List<DrivingTrackPart> trackParts;
+	private List<TrackPart> trackParts;
 
-	public InitializePositionDetection(List<DrivingTrackPart> trackParts) {
+	public InitializePositionDetection(List<TrackPart> trackParts) {
 		this.trackParts = trackParts;
 	}
 
-	public List<DrivingTrackPart> getTrackParts() {
+	public List<TrackPart> getTrackParts() {
 		return trackParts;
 	}
 

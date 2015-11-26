@@ -2,13 +2,13 @@ package ch.hsr.whitespace.javapilot.util;
 
 import java.util.List;
 
-import ch.hsr.whitespace.javapilot.model.track.recognition.RecognitionTrackPart;
+import ch.hsr.whitespace.javapilot.model.track.TrackPart;
 
 public class StringUtil {
 
-	public static String getPatternString(List<RecognitionTrackPart> trackParts) {
+	public static String getPatternString(List<TrackPart> trackParts) {
 		StringBuilder sb = new StringBuilder();
-		for (RecognitionTrackPart trackPart : trackParts) {
+		for (TrackPart trackPart : trackParts) {
 			if ("".equals(sb.toString())) {
 				sb.append(trackPart.getDirection().toShortString());
 			} else {

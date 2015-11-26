@@ -16,7 +16,6 @@ import com.zuehlke.carrera.relayapi.messages.VelocityMessage;
 import akka.actor.ActorRef;
 import akka.actor.Props;
 import akka.actor.UntypedActor;
-import ch.hsr.whitespace.javapilot.akka.messages.PowerChangeMessage;
 import ch.hsr.whitespace.javapilot.model.data.store.Race;
 import ch.hsr.whitespace.javapilot.persistance.JSONSerializer;
 
@@ -46,8 +45,6 @@ public class DataSerializerActor extends UntypedActor {
 			if (race.getStartTime() == 0)
 				race.setStartTime(((SensorEvent) message).getTimeStamp());
 			race.getSensorEvents().add((SensorEvent) message);
-		} else if (message instanceof PowerChangeMessage) {
-			race.getPowerChanges().add((PowerChangeMessage) message);
 		} else if (message instanceof PenaltyMessage) {
 			race.getPenalties().add((PenaltyMessage) message);
 		} else if (message instanceof VelocityMessage) {
