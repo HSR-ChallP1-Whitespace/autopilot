@@ -1,10 +1,6 @@
 package ch.hsr.whitespace.javapilot.akka;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import com.zuehlke.carrera.javapilot.akka.PowerAction;
-import com.zuehlke.carrera.relayapi.messages.RaceStartMessage;
 import com.zuehlke.carrera.relayapi.messages.SensorEvent;
 
 import akka.actor.ActorRef;
@@ -16,18 +12,12 @@ import ch.hsr.whitespace.javapilot.akka.messages.InitializePositionDetection;
 import ch.hsr.whitespace.javapilot.akka.messages.TrackRecognitionFinished;
 import ch.hsr.whitespace.javapilot.config.PilotProperties;
 import ch.hsr.whitespace.javapilot.model.Power;
-import ch.hsr.whitespace.javapilot.model.track.Direction;
 
 /**
  * Main Pilot-Actor
  * 
  */
 public class WhiteSpacePilot extends UntypedActor {
-
-	private static final long MIN_STRAIGHT_DURATION_FOR_SPEEDUP = 600;
-	private static final int MAX_CURVE_POWER = 150;
-
-	private final Logger LOGGER = LoggerFactory.getLogger(WhiteSpacePilot.class);
 
 	private PilotProperties properties;
 
@@ -57,36 +47,12 @@ public class WhiteSpacePilot extends UntypedActor {
 			handleSensorEvent((SensorEvent) message);
 		} else if (message instanceof TrackRecognitionFinished) {
 			handleTrackRecognitionFinished((TrackRecognitionFinished) message);
-		} else if (message instanceof RaceStartMessage) {
-			handleRaceStart((RaceStartMessage) message);
 		} else if (message instanceof ChangePowerMessage) {
 			setCurrentPower(((ChangePowerMessage) message).getNewPower());
 		} else {
 			unhandled(message);
 		}
 	}
-
-	private void handleRaceStart(RaceStartMessage message) {
-		Direction.initialize4TrackRecognition();
-	}
-
-	// private void handleDirectionChanged(PositionChangeMessage message) {
-	// Power increasedPower = calculateIncreasedPower(message);
-	// setCurrentPower(increasedPower);
-	// }
-
-	// private Power calculateIncreasedPower(PositionChangeMessage message) {
-	// DrivingTrackPart trackPart = message.getTrackPart();
-	// if (trackPart.getDirection() == Direction.STRAIGHT) {
-	// if (!trackPart.hasPenalty() && trackPart.getDuration() >
-	// MIN_STRAIGHT_DURATION_FOR_SPEEDUP)
-	// return trackPart.getCurrentPower().increase(10);
-	// else
-	// return trackPart.getCurrentPower();
-	// } else {
-	// return new Power(Math.min(MAX_CURVE_POWER, currentPower.getValue()));
-	// }
-	// }
 
 	private void forwardMessagesToChildren(Object message) {
 		dataAnalyzerActor.forward(message, getContext());
@@ -106,7 +72,6 @@ public class WhiteSpacePilot extends UntypedActor {
 		trackRecognitionFinished = true;
 		trackRecognizerActor.tell(PoisonPill.getInstance(), getSelf());
 		drivingCoordinatorActor.tell(new InitializePositionDetection(message.getTrackParts()), getSelf());
-		Direction.configure4Driving();
 	}
 
 	private void handleSensorEvent(SensorEvent event) {
