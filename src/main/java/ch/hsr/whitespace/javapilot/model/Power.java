@@ -9,6 +9,10 @@ public class Power {
 
 	public Power(int value) {
 		this.value = value;
+		if (value > MAX_POWER)
+			this.value = MAX_POWER;
+		if (value < MIN_POWER)
+			this.value = MIN_POWER;
 	}
 
 	public Power increase(int amount) {
@@ -29,6 +33,11 @@ public class Power {
 
 	public int getValue() {
 		return value;
+	}
+
+	@Override
+	public String toString() {
+		return "Power[" + value + "]";
 	}
 
 }
