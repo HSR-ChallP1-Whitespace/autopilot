@@ -6,11 +6,11 @@ import org.slf4j.LoggerFactory;
 import akka.actor.ActorRef;
 import akka.actor.Props;
 import akka.actor.UntypedActor;
+import ch.hsr.whitespace.javapilot.akka.messages.ChainTrackPartActorsMessage;
 import ch.hsr.whitespace.javapilot.akka.messages.ChangePowerMessage;
 import ch.hsr.whitespace.javapilot.akka.messages.DirectionChangedMessage;
 import ch.hsr.whitespace.javapilot.akka.messages.LostPositionMessage;
 import ch.hsr.whitespace.javapilot.akka.messages.PrintTrackPositionMessage;
-import ch.hsr.whitespace.javapilot.akka.messages.SetNextTrackPartActorMessage;
 import ch.hsr.whitespace.javapilot.akka.messages.SpeedupMessage;
 import ch.hsr.whitespace.javapilot.akka.messages.TrackPartEnteredMessage;
 import ch.hsr.whitespace.javapilot.model.Power;
@@ -22,6 +22,7 @@ public class TrackPartDrivingActor extends UntypedActor {
 
 	private ActorRef pilot;
 	private TrackPart trackPart;
+	private ActorRef previousTrackPartActor;
 	private ActorRef nextTrackPartActor;
 	private Power initialPower;
 	private Power currentPower;
@@ -47,8 +48,9 @@ public class TrackPartDrivingActor extends UntypedActor {
 			enterTrackPart((TrackPartEnteredMessage) message);
 		} else if (message instanceof DirectionChangedMessage && iAmDriving) {
 			leaveTrackPart((DirectionChangedMessage) message);
-		} else if (message instanceof SetNextTrackPartActorMessage) {
-			this.nextTrackPartActor = ((SetNextTrackPartActorMessage) message).getNextTrackPartActorRef();
+		} else if (message instanceof ChainTrackPartActorsMessage) {
+			this.previousTrackPartActor = ((ChainTrackPartActorsMessage) message).getPreviousTrackPartActorRef();
+			this.nextTrackPartActor = ((ChainTrackPartActorsMessage) message).getNextTrackPartActorRef();
 		} else if (message instanceof SpeedupMessage) {
 			this.iAmSpeedingUp = ((SpeedupMessage) message).isSpeedup();
 		}

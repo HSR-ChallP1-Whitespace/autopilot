@@ -13,10 +13,10 @@ import com.zuehlke.carrera.relayapi.messages.VelocityMessage;
 import akka.actor.ActorRef;
 import akka.actor.Props;
 import akka.actor.UntypedActor;
+import ch.hsr.whitespace.javapilot.akka.messages.ChainTrackPartActorsMessage;
 import ch.hsr.whitespace.javapilot.akka.messages.InitializePositionDetection;
 import ch.hsr.whitespace.javapilot.akka.messages.LostPositionMessage;
 import ch.hsr.whitespace.javapilot.akka.messages.PrintTrackPositionMessage;
-import ch.hsr.whitespace.javapilot.akka.messages.SetNextTrackPartActorMessage;
 import ch.hsr.whitespace.javapilot.akka.messages.SpeedupMessage;
 import ch.hsr.whitespace.javapilot.akka.messages.TrackPartEnteredMessage;
 import ch.hsr.whitespace.javapilot.model.track.TrackPart;
@@ -128,10 +128,15 @@ public class DrivingCoordinatorActor extends UntypedActor {
 
 	private void initializeTrackPartActorList() {
 		for (int i = 1; i <= trackPartActors.size(); i++) {
-			if (i == (trackPartActors.size()))
-				trackPartActors.get(i).tell(new SetNextTrackPartActorMessage(trackPartActors.get(1)), getSelf());
-			else
-				trackPartActors.get(i).tell(new SetNextTrackPartActorMessage(trackPartActors.get(i + 1)), getSelf());
+			int previousId = i - 1;
+			int nextId = i + 1;
+			if (i == 1) {
+				previousId = trackPartActors.size();
+			} else if (i == trackPartActors.size()) {
+				nextId = 1;
+			}
+			LOGGER.info("Chain trackpart-actor with id '" + i + "': previous='" + previousId + "', next='" + nextId + "'");
+			trackPartActors.get(i).tell(new ChainTrackPartActorsMessage(trackPartActors.get(previousId), trackPartActors.get(nextId)), getSelf());
 		}
 	}
 
