@@ -17,9 +17,11 @@ import ch.hsr.whitespace.javapilot.akka.messages.InitializePositionDetection;
 import ch.hsr.whitespace.javapilot.akka.messages.LostPositionMessage;
 import ch.hsr.whitespace.javapilot.akka.messages.PrintTrackPositionMessage;
 import ch.hsr.whitespace.javapilot.akka.messages.SetNextTrackPartActorMessage;
+import ch.hsr.whitespace.javapilot.akka.messages.SpeedupMessage;
 import ch.hsr.whitespace.javapilot.akka.messages.TrackPartEnteredMessage;
 import ch.hsr.whitespace.javapilot.model.track.TrackPart;
 import ch.hsr.whitespace.javapilot.model.track.VelocityBarrier;
+import ch.hsr.whitespace.javapilot.util.TrackPartUtil;
 
 public class DrivingCoordinatorActor extends UntypedActor {
 
@@ -50,6 +52,7 @@ public class DrivingCoordinatorActor extends UntypedActor {
 			initializeTrackPartMap(((InitializePositionDetection) message).getTrackParts());
 			initializeBarriers();
 			trackPartActors.get(1).tell(new TrackPartEnteredMessage(0, trackParts.get(1).getDirection()), getSelf());
+			speedupStraightsByLength();
 		} else if (message instanceof VelocityMessage) {
 			handleVelocityMessage((VelocityMessage) message);
 		} else if (message instanceof PrintTrackPositionMessage) {
@@ -57,6 +60,13 @@ public class DrivingCoordinatorActor extends UntypedActor {
 		} else if (message instanceof LostPositionMessage) {
 			lostPosition = true;
 		}
+	}
+
+	private void speedupStraightsByLength() {
+		// first tests, just speedup in longest straight part
+		List<TrackPart> straights = TrackPartUtil.getStraightPartsByDuration(trackParts.values());
+		ActorRef firstStraightPartActor = trackPartActors.get(straights.get(0).getId());
+		firstStraightPartActor.tell(new SpeedupMessage(true), getSelf());
 	}
 
 	private void forwardMessagesToDriverActors(Object message) {

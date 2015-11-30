@@ -11,15 +11,14 @@ import ch.hsr.whitespace.javapilot.akka.messages.DirectionChangedMessage;
 import ch.hsr.whitespace.javapilot.akka.messages.LostPositionMessage;
 import ch.hsr.whitespace.javapilot.akka.messages.PrintTrackPositionMessage;
 import ch.hsr.whitespace.javapilot.akka.messages.SetNextTrackPartActorMessage;
+import ch.hsr.whitespace.javapilot.akka.messages.SpeedupMessage;
 import ch.hsr.whitespace.javapilot.akka.messages.TrackPartEnteredMessage;
 import ch.hsr.whitespace.javapilot.model.Power;
-import ch.hsr.whitespace.javapilot.model.track.Direction;
 import ch.hsr.whitespace.javapilot.model.track.TrackPart;
 
 public class TrackPartDrivingActor extends UntypedActor {
 
 	private final Logger LOGGER = LoggerFactory.getLogger(TrackPartDrivingActor.class);
-	private static final long MIN_STRAIGHT_DURATION_FOR_SPEEDUP = 600;
 
 	private ActorRef pilot;
 	private TrackPart trackPart;
@@ -27,6 +26,7 @@ public class TrackPartDrivingActor extends UntypedActor {
 	private Power currentPower;
 
 	private boolean iAmDriving = false;
+	private boolean iAmSpeedingUp = false;
 	private long trackPartEntryTime = 0;
 
 	public static Props props(ActorRef pilot, TrackPart trackPart, int currentPower) {
@@ -47,11 +47,13 @@ public class TrackPartDrivingActor extends UntypedActor {
 			leaveTrackPart((DirectionChangedMessage) message);
 		} else if (message instanceof SetNextTrackPartActorMessage) {
 			this.nextTrackPartActor = ((SetNextTrackPartActorMessage) message).getNextTrackPartActorRef();
+		} else if (message instanceof SpeedupMessage) {
+			this.iAmSpeedingUp = ((SpeedupMessage) message).isSpeedup();
 		}
 	}
 
 	private Power evaluateNewPower() {
-		if (trackPart.getDirection() == Direction.STRAIGHT && trackPart.getDuration() > MIN_STRAIGHT_DURATION_FOR_SPEEDUP)
+		if (iAmSpeedingUp)
 			return currentPower.increase(10);
 		return currentPower;
 	}
