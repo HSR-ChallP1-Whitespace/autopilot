@@ -11,6 +11,7 @@ import ch.hsr.whitespace.javapilot.akka.messages.ChangePowerMessage;
 import ch.hsr.whitespace.javapilot.akka.messages.DirectionChangedMessage;
 import ch.hsr.whitespace.javapilot.akka.messages.LostPositionMessage;
 import ch.hsr.whitespace.javapilot.akka.messages.PrintTrackPositionMessage;
+import ch.hsr.whitespace.javapilot.akka.messages.SpeedupFactorFromNextPartMessage;
 import ch.hsr.whitespace.javapilot.akka.messages.SpeedupMessage;
 import ch.hsr.whitespace.javapilot.akka.messages.TrackPartEnteredMessage;
 import ch.hsr.whitespace.javapilot.model.Power;
@@ -30,6 +31,9 @@ public class TrackPartDrivingActor extends UntypedActor {
 	private boolean iAmDriving = false;
 	private boolean iAmSpeedingUp = false;
 	private long trackPartEntryTime = 0;
+
+	private long initialDuration = 0;
+	private double speedupFactor;
 
 	public static Props props(ActorRef pilot, TrackPart trackPart, int currentPower) {
 		return Props.create(TrackPartDrivingActor.class, () -> new TrackPartDrivingActor(pilot, trackPart, currentPower));
@@ -53,7 +57,21 @@ public class TrackPartDrivingActor extends UntypedActor {
 			this.nextTrackPartActor = ((ChainTrackPartActorsMessage) message).getNextTrackPartActorRef();
 		} else if (message instanceof SpeedupMessage) {
 			this.iAmSpeedingUp = ((SpeedupMessage) message).isSpeedup();
+		} else if (message instanceof SpeedupFactorFromNextPartMessage && iAmSpeedingUp) {
+			handleSpeedupFactor((SpeedupFactorFromNextPartMessage) message);
 		}
+	}
+
+	private void handleSpeedupFactor(SpeedupFactorFromNextPartMessage message) {
+		if (initialDuration == 0)
+			initialDuration = message.getLastDuration();
+		this.speedupFactor = calcSpeedupFactor(message.getCurrentDuration());
+		LOGGER.info("Speedup at the end of trackpart was: " + this.speedupFactor + " (lastDuration=" + message.getLastDuration() + ", currentDuration="
+				+ message.getCurrentDuration() + ")");
+	}
+
+	private double calcSpeedupFactor(long currentDuration) {
+		return 100 - ((100.0 / initialDuration) * currentDuration);
 	}
 
 	private Power evaluateNewPower() {
@@ -97,10 +115,15 @@ public class TrackPartDrivingActor extends UntypedActor {
 	}
 
 	private void leaveTrackPart(DirectionChangedMessage message) {
-		LOGGER.info("Direction changed: " + message.getNewDirection() + " (leave track-part)");
+		long lastDuration = trackPart.getDuration();
 		updateTrackPartTimestamps(message.getTimeStamp());
+		tellSpeedupFactorToPreviousTrackPart(lastDuration, trackPart.getDuration());
 		notifyNextTrackPartActor(message);
 		iAmDriving = false;
+	}
+
+	private void tellSpeedupFactorToPreviousTrackPart(long lastDuration, long currentDuration) {
+		previousTrackPartActor.tell(new SpeedupFactorFromNextPartMessage(lastDuration, currentDuration), getSelf());
 	}
 
 	private void tellParentToPrintPosition() {
