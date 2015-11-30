@@ -23,6 +23,7 @@ public class TrackPartDrivingActor extends UntypedActor {
 	private ActorRef pilot;
 	private TrackPart trackPart;
 	private ActorRef nextTrackPartActor;
+	private Power initialPower;
 	private Power currentPower;
 
 	private boolean iAmDriving = false;
@@ -36,6 +37,7 @@ public class TrackPartDrivingActor extends UntypedActor {
 	public TrackPartDrivingActor(ActorRef pilot, TrackPart trackPart, int currentPower) {
 		this.pilot = pilot;
 		this.trackPart = trackPart;
+		this.initialPower = new Power(currentPower);
 		this.currentPower = new Power(currentPower);
 	}
 
@@ -58,16 +60,25 @@ public class TrackPartDrivingActor extends UntypedActor {
 		return currentPower;
 	}
 
+	private void resetPower() {
+		setPower(initialPower);
+	}
+
 	private void enterTrackPart(TrackPartEnteredMessage message) {
 		if (!isValidDirection(message)) {
-			LOGGER.warn("Direction is not correct. Lost position!");
-			sendLostPositionMessage();
+			handleLostPosition();
 			return;
 		}
 		iAmDriving = true;
 		trackPartEntryTime = message.getTimestamp();
 		tellParentToPrintPosition();
 		setPower(evaluateNewPower());
+	}
+
+	private void handleLostPosition() {
+		LOGGER.warn("Direction is not correct. Lost position!");
+		resetPower();
+		sendLostPositionMessage();
 	}
 
 	private void setPower(Power power) {
