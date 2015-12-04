@@ -1,9 +1,14 @@
 package ch.hsr.whitespace.javapilot.model;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 public class Power {
 
-	private static final int MAX_POWER = 255;
-	private static final int MIN_POWER = 0;
+	private final Logger LOGGER = LoggerFactory.getLogger(Power.class);
+
+	public static final int MAX_POWER = 255;
+	public static final int MIN_POWER = 0;
 
 	private int value;
 
@@ -33,6 +38,12 @@ public class Power {
 
 	public int getValue() {
 		return value;
+	}
+
+	public double calcDiffFactor(Power otherPower) {
+		double result = new Double(value) / new Double(otherPower.getValue());
+		LOGGER.info("calcDiffFactor: " + result + "(thisPower=" + value + ", otherPower=" + otherPower.getValue() + ")");
+		return result;
 	}
 
 	@Override

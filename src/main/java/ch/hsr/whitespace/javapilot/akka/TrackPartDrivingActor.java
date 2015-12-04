@@ -17,6 +17,7 @@ import ch.hsr.whitespace.javapilot.akka.messages.DirectionChangedMessage;
 import ch.hsr.whitespace.javapilot.akka.messages.LostPositionMessage;
 import ch.hsr.whitespace.javapilot.akka.messages.PrintTrackPositionMessage;
 import ch.hsr.whitespace.javapilot.akka.messages.SpeedupFactorFromNextPartMessage;
+import ch.hsr.whitespace.javapilot.akka.messages.SpeedupFinishedMessage;
 import ch.hsr.whitespace.javapilot.akka.messages.SpeedupMessage;
 import ch.hsr.whitespace.javapilot.akka.messages.TrackPartEnteredMessage;
 import ch.hsr.whitespace.javapilot.model.Power;
@@ -38,9 +39,12 @@ public class TrackPartDrivingActor extends UntypedActor {
 	private boolean iAmDriving = false;
 	private boolean iAmSpeedingUp = false;
 	private long trackPartEntryTime = 0;
+	private long timeUntilBrake;
 
 	private long initialDuration = 0;
 	private double speedupFactor = 0.0;
+
+	private boolean hasPenalty = false;
 
 	public static Props props(ActorRef pilot, TrackPart trackPart, int currentPower) {
 		return Props.create(TrackPartDrivingActor.class, () -> new TrackPartDrivingActor(pilot, trackPart, currentPower));
@@ -69,9 +73,15 @@ public class TrackPartDrivingActor extends UntypedActor {
 			handleSpeedupFactor((SpeedupFactorFromNextPartMessage) message);
 		} else if (message instanceof BrakeDownMessage) {
 			brakeDown((BrakeDownMessage) message);
-		} else if (message instanceof PenaltyMessage) {
+		} else if (message instanceof PenaltyMessage && iAmDriving) {
 			LOGGER.warn("Driver #" + trackPart.getId() + ": got PENALTY");
+			handlePenalty((PenaltyMessage) message);
 		}
+	}
+
+	private void handlePenalty(PenaltyMessage message) {
+		hasPenalty = true;
+		currentBrakeDownPower = currentBrakeDownPower.reduce(20);
 	}
 
 	private void brakeDown(BrakeDownMessage message) {
@@ -82,9 +92,11 @@ public class TrackPartDrivingActor extends UntypedActor {
 	private void handleSpeedupFactor(SpeedupFactorFromNextPartMessage message) {
 		if (initialDuration == 0)
 			initialDuration = message.getLastDuration();
-		this.speedupFactor = calcSpeedupFactor(message.getCurrentDuration());
-		LOGGER.info(
-				"Speedup at the end of trackpart was: " + this.speedupFactor + " (initialDuration=" + initialDuration + ", currentDuration=" + message.getCurrentDuration() + ")");
+		if (!hasPenalty) {
+			this.speedupFactor = calcSpeedupFactor(message.getCurrentDuration());
+			LOGGER.info("Speedup at the end of trackpart was: " + this.speedupFactor + " (initialDuration=" + initialDuration + ", currentDuration=" + message.getCurrentDuration()
+					+ ")");
+		}
 	}
 
 	private double calcSpeedupFactor(long currentDuration) {
@@ -93,21 +105,38 @@ public class TrackPartDrivingActor extends UntypedActor {
 
 	private void evaluateAndSetNewPower() {
 		if (iAmSpeedingUp) {
-			double increasePower = 40.0;
-			double powerUpFactor = currentPower.getValue() / (currentPower.getValue() + increasePower);
-			LOGGER.info("powerFactor=" + powerUpFactor);
-			long timeUntilBrake = (long) (trackPart.getDuration() * 0.5 * powerUpFactor);
-			LOGGER.info("timeUntilBrake=" + timeUntilBrake);
-			LOGGER.info("currentPower=" + currentPower.getValue() + ", speedupFactor=" + speedupFactor);
-			currentBrakeDownPower = new Power(currentBrakeDownPower.getValue() + (int) (currentBrakeDownPower.getValue() * -speedupFactor));
-			LOGGER.info("brakedown-power=" + currentBrakeDownPower.getValue());
-			currentPower = currentPower.increase((int) increasePower);
-			scheduleBrake(timeUntilBrake, currentBrakeDownPower);
+			Power newPower = currentPower.increase(100);
+			timeUntilBrake = calculateTimeUntilBrake(currentPower.calcDiffFactor(newPower));
+			currentBrakeDownPower = calculateBrakeDownPower();
+			currentPower = newPower;
+			if (currentPower.getValue() == Power.MAX_POWER)
+				stopSpeedup();
 		}
+		scheduleBrake(timeUntilBrake, currentBrakeDownPower);
 		setPower(currentPower);
 	}
 
+	private Power calculateBrakeDownPower() {
+		Power power = new Power(currentBrakeDownPower.getValue() + (int) (currentBrakeDownPower.getValue() * -speedupFactor));
+		LOGGER.info("Calculated brake down power: " + power.getValue());
+		return power;
+	}
+
+	private long calculateTimeUntilBrake(double powerDiffFactor) {
+		long result = (long) (trackPart.getDuration() * 0.5 * powerDiffFactor);
+		LOGGER.info("Calculated time until brake: " + result);
+		return result;
+	}
+
+	private void stopSpeedup() {
+		iAmSpeedingUp = false;
+		getContext().parent().tell(new SpeedupFinishedMessage(trackPart), getSelf());
+	}
+
 	private void scheduleBrake(long timeUntilBrake, Power brakeDownPower) {
+		if (brakeDownPower.getValue() == currentPower.getValue())
+			return;
+
 		getContext().system().scheduler().scheduleOnce(Duration.create(timeUntilBrake, TimeUnit.MILLISECONDS), new Runnable() {
 			@Override
 			public void run() {
@@ -126,6 +155,7 @@ public class TrackPartDrivingActor extends UntypedActor {
 			return;
 		}
 		iAmDriving = true;
+		hasPenalty = false;
 		trackPartEntryTime = message.getTimestamp();
 		tellParentToPrintPosition();
 		evaluateAndSetNewPower();
