@@ -1,6 +1,7 @@
 package ch.hsr.whitespace.javapilot.akka;
 
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
@@ -17,6 +18,7 @@ import ch.hsr.whitespace.javapilot.akka.messages.ChainTrackPartActorsMessage;
 import ch.hsr.whitespace.javapilot.akka.messages.InitializePositionDetection;
 import ch.hsr.whitespace.javapilot.akka.messages.LostPositionMessage;
 import ch.hsr.whitespace.javapilot.akka.messages.PrintTrackPositionMessage;
+import ch.hsr.whitespace.javapilot.akka.messages.SpeedupFinishedMessage;
 import ch.hsr.whitespace.javapilot.akka.messages.SpeedupMessage;
 import ch.hsr.whitespace.javapilot.akka.messages.TrackPartEnteredMessage;
 import ch.hsr.whitespace.javapilot.model.track.TrackPart;
@@ -34,6 +36,8 @@ public class DrivingCoordinatorActor extends UntypedActor {
 	private int lastBarrierIndex = 0;
 	private boolean lostPosition = false;
 	private int initialPower;
+	private List<TrackPart> straights;
+	private Iterator<TrackPart> straightsIterator;
 
 	public static Props props(ActorRef pilot, int initialPower) {
 		return Props.create(DrivingCoordinatorActor.class, () -> new DrivingCoordinatorActor(initialPower));
@@ -52,21 +56,29 @@ public class DrivingCoordinatorActor extends UntypedActor {
 			initializeTrackPartMap(((InitializePositionDetection) message).getTrackParts());
 			initializeBarriers();
 			trackPartActors.get(1).tell(new TrackPartEnteredMessage(0, trackParts.get(1).getDirection()), getSelf());
-			speedupStraightsByLength();
+			speedupFirstStraightPart();
 		} else if (message instanceof VelocityMessage) {
 			handleVelocityMessage((VelocityMessage) message);
 		} else if (message instanceof PrintTrackPositionMessage) {
 			printCurrentPosition(((PrintTrackPositionMessage) message).getCurrentTrackPartId());
 		} else if (message instanceof LostPositionMessage) {
 			lostPosition = true;
+		} else if (message instanceof SpeedupFinishedMessage) {
+			speedupNextStraightPart();
 		}
 	}
 
-	private void speedupStraightsByLength() {
-		// first tests, just speedup in longest straight part
-		List<TrackPart> straights = TrackPartUtil.getStraightPartsByDuration(trackParts.values());
-		ActorRef firstStraightPartActor = trackPartActors.get(straights.get(0).getId());
-		firstStraightPartActor.tell(new SpeedupMessage(true), getSelf());
+	private void speedupFirstStraightPart() {
+		this.straights = TrackPartUtil.getStraightPartsByDuration(trackParts.values());
+		this.straightsIterator = straights.iterator();
+		speedupNextStraightPart();
+	}
+
+	private void speedupNextStraightPart() {
+		if (straightsIterator.hasNext()) {
+			ActorRef firstStraightPartActor = trackPartActors.get(straightsIterator.next().getId());
+			firstStraightPartActor.tell(new SpeedupMessage(true), getSelf());
+		}
 	}
 
 	private void forwardMessagesToDriverActors(Object message) {
