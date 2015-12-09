@@ -1,6 +1,6 @@
 package ch.hsr.whitespace.javapilot.algorithms;
 
-import com.zuehlke.carrera.timeseries.FloatingHistory;
+import ch.hsr.whitespace.javapilot.util.FloatingHistory;
 
 public class MovingAverages {
 
