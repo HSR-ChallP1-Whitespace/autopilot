@@ -10,12 +10,14 @@ import java.util.stream.Collectors;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.zuehlke.carrera.relayapi.messages.PenaltyMessage;
 import com.zuehlke.carrera.relayapi.messages.VelocityMessage;
 
 import akka.actor.ActorRef;
 import akka.actor.Props;
 import akka.actor.UntypedActor;
 import ch.hsr.whitespace.javapilot.akka.messages.ChainTrackPartActorsMessage;
+import ch.hsr.whitespace.javapilot.akka.messages.DirectionChangedMessage;
 import ch.hsr.whitespace.javapilot.akka.messages.InitializePositionDetection;
 import ch.hsr.whitespace.javapilot.akka.messages.LostPositionMessage;
 import ch.hsr.whitespace.javapilot.akka.messages.PrintTrackPositionMessage;
@@ -26,6 +28,7 @@ import ch.hsr.whitespace.javapilot.akka.messages.TrackPartEnteredMessage;
 import ch.hsr.whitespace.javapilot.model.track.Direction;
 import ch.hsr.whitespace.javapilot.model.track.TrackPart;
 import ch.hsr.whitespace.javapilot.model.track.VelocityBarrier;
+import ch.hsr.whitespace.javapilot.util.MessageUtil;
 import ch.hsr.whitespace.javapilot.util.TrackPartUtil;
 
 public class DrivingCoordinatorActor extends UntypedActor {
@@ -34,6 +37,7 @@ public class DrivingCoordinatorActor extends UntypedActor {
 
 	private static final int MAX_LOSTS_WITHIN_10_SECS = 4;
 
+	private ActorRef whitespacePilot;
 	private Map<Integer, TrackPart> trackParts;
 	private Map<Integer, ActorRef> trackPartActors;
 	private List<VelocityBarrier> barriers;
@@ -46,10 +50,11 @@ public class DrivingCoordinatorActor extends UntypedActor {
 	private List<LostPositionMessage> lostMessages;
 
 	public static Props props(ActorRef pilot, int initialPower) {
-		return Props.create(DrivingCoordinatorActor.class, () -> new DrivingCoordinatorActor(initialPower));
+		return Props.create(DrivingCoordinatorActor.class, () -> new DrivingCoordinatorActor(pilot, initialPower));
 	}
 
-	public DrivingCoordinatorActor(int initialPower) {
+	public DrivingCoordinatorActor(ActorRef whitespacePilot, int initialPower) {
+		this.whitespacePilot = whitespacePilot;
 		this.initialPower = initialPower;
 		trackParts = new TreeMap<>();
 		trackPartActors = new TreeMap<>();
@@ -100,7 +105,7 @@ public class DrivingCoordinatorActor extends UntypedActor {
 		for (ActorRef actor : trackPartActors.values()) {
 			getContext().stop(actor);
 		}
-		getContext().parent().tell(new RestartWithTrackRecognitionMessage(), getSelf());
+		whitespacePilot.tell(new RestartWithTrackRecognitionMessage(), getSelf());
 	}
 
 	private boolean isDetectedDirectionPartOfTrackPart(Direction detectedDirection) {
@@ -125,6 +130,8 @@ public class DrivingCoordinatorActor extends UntypedActor {
 	}
 
 	private void forwardMessagesToDriverActors(Object message) {
+		if (!MessageUtil.isMessageForwardNeeded(message, new Class[] { DirectionChangedMessage.class, PenaltyMessage.class }))
+			return;
 		for (ActorRef actor : trackPartActors.values()) {
 			actor.tell(message, getSender());
 		}
@@ -196,7 +203,7 @@ public class DrivingCoordinatorActor extends UntypedActor {
 	}
 
 	private void createTrackPartActor(int idCounter, TrackPart trackPart) {
-		ActorRef actor = getContext().actorOf(Props.create(TrackPartDrivingActor.class, getContext().parent(), trackPart, initialPower));
+		ActorRef actor = getContext().actorOf(Props.create(TrackPartDrivingActor.class, whitespacePilot, trackPart, initialPower));
 		trackPartActors.put(idCounter, actor);
 	}
 

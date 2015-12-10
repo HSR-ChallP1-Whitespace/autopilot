@@ -12,6 +12,7 @@ import com.zuehlke.carrera.relayapi.messages.VelocityMessage;
 import akka.actor.ActorRef;
 import akka.actor.Props;
 import akka.actor.UntypedActor;
+import ch.hsr.whitespace.javapilot.akka.messages.CheckedPatternsMessage;
 import ch.hsr.whitespace.javapilot.akka.messages.DirectionChangedMessage;
 import ch.hsr.whitespace.javapilot.akka.messages.MatchingTrackPatternResponseMessage;
 import ch.hsr.whitespace.javapilot.akka.messages.TrackRecognitionFinished;
@@ -28,6 +29,7 @@ public class TrackRecognizerActor extends UntypedActor {
 
 	private final Logger LOGGER = LoggerFactory.getLogger(TrackRecognizerActor.class);
 
+	private ActorRef whitespacePilot;
 	private boolean hasMatched = false;
 	private long startTime;
 	private Track recognizedTrack;
@@ -37,22 +39,22 @@ public class TrackRecognizerActor extends UntypedActor {
 	private List<ActorRef> childActors;
 	private List<String> alreadyCheckedPatterns;
 
-	public TrackRecognizerActor() {
+	public TrackRecognizerActor(ActorRef whitespacePilot, List<String> alreadyCheckedPatterns) {
+		this.whitespacePilot = whitespacePilot;
 		recognizedTrack = new Track();
 		tempVelocityBarriers = new ArrayList<>();
 		childActors = new ArrayList<>();
-		alreadyCheckedPatterns = new ArrayList<>();
+		this.alreadyCheckedPatterns = alreadyCheckedPatterns;
 		LOGGER.info("TrackRecognizer initialized");
 	}
 
-	public static Props props(ActorRef pilot) {
-		return Props.create(TrackRecognizerActor.class, () -> new TrackRecognizerActor());
+	public static Props props(ActorRef pilot, List<String> alreadyCheckedPatterns) {
+		return Props.create(TrackRecognizerActor.class, () -> new TrackRecognizerActor(pilot, alreadyCheckedPatterns));
 	}
 
 	@Override
 	public void onReceive(Object message) throws Exception {
 		if (!hasMatched) {
-			forwardMessage(message);
 			if (message instanceof SensorEvent) {
 				if (startTime == 0) {
 					setStartTime((SensorEvent) message);
@@ -60,6 +62,7 @@ public class TrackRecognizerActor extends UntypedActor {
 			} else if (message instanceof VelocityMessage) {
 				handleVelocityMessage((VelocityMessage) message);
 			} else if (message instanceof DirectionChangedMessage) {
+				forwardMessage(message);
 				handleDirectionChanged((DirectionChangedMessage) message);
 			} else if (message instanceof MatchingTrackPatternResponseMessage) {
 				handleTrackPatternResponse((MatchingTrackPatternResponseMessage) message);
@@ -109,7 +112,6 @@ public class TrackRecognizerActor extends UntypedActor {
 	}
 
 	private void tellTrackRecognitionFinished(PossibleTrackMatch match) {
-		ActorRef whitespacePilot = getContext().parent();
 		whitespacePilot.tell(new TrackRecognitionFinished(match.getTrackParts()), getSelf());
 	}
 
@@ -144,6 +146,7 @@ public class TrackRecognizerActor extends UntypedActor {
 			LOGGER.info("Check possible pattern: " + pattern);
 			createActorToCheckPossibleMatch(possibleMatch);
 			alreadyCheckedPatterns.add(pattern);
+			whitespacePilot.tell(new CheckedPatternsMessage(new ArrayList<String>(this.alreadyCheckedPatterns)), getSelf());
 		}
 	}
 
@@ -151,9 +154,9 @@ public class TrackRecognizerActor extends UntypedActor {
 		childActors.add(getContext().actorOf(Props.create(MatchingTrackPatternActor.class, match, currentDirection)));
 	}
 
-	private void removeTrackPatternMatchingActor(ActorRef sender) {
-		getContext().stop(sender);
-		childActors.remove(sender);
+	private void removeTrackPatternMatchingActor(ActorRef matchingActor) {
+		getContext().stop(matchingActor);
+		childActors.remove(matchingActor);
 	}
 
 	private void printTrack(PossibleTrackMatch possibleMatch) {
