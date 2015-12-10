@@ -99,7 +99,6 @@ public class TrackRecognizerActor extends UntypedActor {
 	}
 
 	private void handleDirectionChanged(DirectionChangedMessage message) {
-		LOGGER.info("Direction changed: " + message.getNewDirection());
 		if (isFirstDirectionChange()) {
 			currentDirection = message.getNewDirection();
 		} else {

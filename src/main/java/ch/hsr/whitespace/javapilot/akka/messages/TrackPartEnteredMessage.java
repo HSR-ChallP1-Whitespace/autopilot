@@ -6,11 +6,17 @@ public class TrackPartEnteredMessage {
 
 	private long timestamp;
 	private Direction trackPartDirection;
+	private boolean isPositionCorrectionMessage = false;
 
 	public TrackPartEnteredMessage(long timestamp, Direction trackPartDirection) {
 		super();
 		this.timestamp = timestamp;
 		this.trackPartDirection = trackPartDirection;
+	}
+
+	public TrackPartEnteredMessage(long timestamp, Direction trackPartDirection, boolean isPositionCorrectionMessage) {
+		this(timestamp, trackPartDirection);
+		this.isPositionCorrectionMessage = isPositionCorrectionMessage;
 	}
 
 	public long getTimestamp() {
@@ -27,6 +33,10 @@ public class TrackPartEnteredMessage {
 
 	public void setTrackPartDirection(Direction trackPartDirection) {
 		this.trackPartDirection = trackPartDirection;
+	}
+
+	public boolean isPositionCorrectionMessage() {
+		return isPositionCorrectionMessage;
 	}
 
 }

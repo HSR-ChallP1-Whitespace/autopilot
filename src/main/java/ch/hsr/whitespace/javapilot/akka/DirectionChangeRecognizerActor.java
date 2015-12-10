@@ -44,8 +44,8 @@ public class DirectionChangeRecognizerActor extends UntypedActor {
 	}
 
 	private void sendDirectionChangeMessage(long timeStamp) {
+		LOGGER.info("Direction changed: " + currentDirection);
 		getContext().parent().tell(new DirectionChangedMessage(timeStamp, currentDirection), getSelf());
-
 	}
 
 	private boolean hasDirectionChanged(Direction newDirection) {

@@ -123,7 +123,9 @@ public class DrivingCoordinatorActor extends UntypedActor {
 	}
 
 	private void speedupNextStraightPart() {
-		if (straightsIterator.hasNext()) {
+		// if (straightsIterator.hasNext()) {
+		// for the moment, try to speedup all of them...
+		while (straightsIterator.hasNext()) {
 			ActorRef firstStraightPartActor = trackPartActors.get(straightsIterator.next().getId());
 			firstStraightPartActor.tell(new SpeedupMessage(true), getSelf());
 		}
@@ -146,7 +148,7 @@ public class DrivingCoordinatorActor extends UntypedActor {
 	}
 
 	private void correctPositionWithLightBarrier(int currentTrackPartId) {
-		trackPartActors.get(currentTrackPartId).tell(new TrackPartEnteredMessage(0, trackParts.get(currentTrackPartId).getDirection()), getSelf());
+		trackPartActors.get(currentTrackPartId).tell(new TrackPartEnteredMessage(0, trackParts.get(currentTrackPartId).getDirection(), true), getSelf());
 		lostPosition = false;
 	}
 
