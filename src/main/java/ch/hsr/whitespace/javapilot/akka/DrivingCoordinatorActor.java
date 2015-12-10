@@ -5,6 +5,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
+import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -18,9 +19,11 @@ import ch.hsr.whitespace.javapilot.akka.messages.ChainTrackPartActorsMessage;
 import ch.hsr.whitespace.javapilot.akka.messages.InitializePositionDetection;
 import ch.hsr.whitespace.javapilot.akka.messages.LostPositionMessage;
 import ch.hsr.whitespace.javapilot.akka.messages.PrintTrackPositionMessage;
+import ch.hsr.whitespace.javapilot.akka.messages.RestartWithTrackRecognitionMessage;
 import ch.hsr.whitespace.javapilot.akka.messages.SpeedupFinishedMessage;
 import ch.hsr.whitespace.javapilot.akka.messages.SpeedupMessage;
 import ch.hsr.whitespace.javapilot.akka.messages.TrackPartEnteredMessage;
+import ch.hsr.whitespace.javapilot.model.track.Direction;
 import ch.hsr.whitespace.javapilot.model.track.TrackPart;
 import ch.hsr.whitespace.javapilot.model.track.VelocityBarrier;
 import ch.hsr.whitespace.javapilot.util.TrackPartUtil;
@@ -28,6 +31,8 @@ import ch.hsr.whitespace.javapilot.util.TrackPartUtil;
 public class DrivingCoordinatorActor extends UntypedActor {
 
 	private final Logger LOGGER = LoggerFactory.getLogger(DrivingCoordinatorActor.class);
+
+	private static final int MAX_LOSTS_WITHIN_10_SECS = 4;
 
 	private Map<Integer, TrackPart> trackParts;
 	private Map<Integer, ActorRef> trackPartActors;
@@ -38,6 +43,7 @@ public class DrivingCoordinatorActor extends UntypedActor {
 	private int initialPower;
 	private List<TrackPart> straights;
 	private Iterator<TrackPart> straightsIterator;
+	private List<LostPositionMessage> lostMessages;
 
 	public static Props props(ActorRef pilot, int initialPower) {
 		return Props.create(DrivingCoordinatorActor.class, () -> new DrivingCoordinatorActor(initialPower));
@@ -47,6 +53,7 @@ public class DrivingCoordinatorActor extends UntypedActor {
 		this.initialPower = initialPower;
 		trackParts = new TreeMap<>();
 		trackPartActors = new TreeMap<>();
+		lostMessages = new ArrayList<>();
 	}
 
 	@Override
@@ -62,10 +69,46 @@ public class DrivingCoordinatorActor extends UntypedActor {
 		} else if (message instanceof PrintTrackPositionMessage) {
 			printCurrentPosition(((PrintTrackPositionMessage) message).getCurrentTrackPartId());
 		} else if (message instanceof LostPositionMessage) {
-			lostPosition = true;
+			handleLostPosition((LostPositionMessage) message);
 		} else if (message instanceof SpeedupFinishedMessage) {
 			speedupNextStraightPart();
 		}
+	}
+
+	private void handleLostPosition(LostPositionMessage message) {
+		lostPosition = true;
+		if (!isDetectedDirectionPartOfTrackPart(message.getDetectedDirection())) {
+			restart();
+			LOGGER.warn("The direction '" + message.getDetectedDirection() + "' is not part of our pattern. :-/ Start over...");
+		}
+		if (doWeHaveTooManyLosts(message)) {
+			restart();
+			LOGGER.warn("We have to many losts :-/ Start over...");
+		}
+	}
+
+	private boolean doWeHaveTooManyLosts(LostPositionMessage message) {
+		lostMessages.add(message);
+		long currentTimeStamp = message.getTimeStamp();
+		long currentMinus10SecsTimeStamp = currentTimeStamp - 10000;
+		List<LostPositionMessage> lostsInLast10Seconds = lostMessages.stream().filter(l -> l.getTimeStamp() > currentMinus10SecsTimeStamp && l.getTimeStamp() <= currentTimeStamp)
+				.collect(Collectors.toList());
+		return lostsInLast10Seconds.size() > MAX_LOSTS_WITHIN_10_SECS;
+	}
+
+	private void restart() {
+		for (ActorRef actor : trackPartActors.values()) {
+			getContext().stop(actor);
+		}
+		getContext().parent().tell(new RestartWithTrackRecognitionMessage(), getSelf());
+	}
+
+	private boolean isDetectedDirectionPartOfTrackPart(Direction detectedDirection) {
+		for (TrackPart trackPart : trackParts.values()) {
+			if (trackPart.getDirection() == detectedDirection)
+				return true;
+		}
+		return false;
 	}
 
 	private void speedupFirstStraightPart() {

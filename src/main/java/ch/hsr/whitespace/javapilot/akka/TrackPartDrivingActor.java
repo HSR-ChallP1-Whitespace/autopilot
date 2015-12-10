@@ -151,7 +151,7 @@ public class TrackPartDrivingActor extends UntypedActor {
 
 	private void enterTrackPart(TrackPartEnteredMessage message) {
 		if (!isValidDirection(message)) {
-			handleLostPosition();
+			handleLostPosition(message);
 			return;
 		}
 		iAmDriving = true;
@@ -161,18 +161,18 @@ public class TrackPartDrivingActor extends UntypedActor {
 		evaluateAndSetNewPower();
 	}
 
-	private void handleLostPosition() {
-		LOGGER.warn("Direction is not correct. Lost position!");
+	private void handleLostPosition(TrackPartEnteredMessage message) {
+		LOGGER.warn("Direction is not correct. Lost position! (expected='" + trackPart.getDirection() + "', detected='" + message.getTrackPartDirection() + "')");
 		resetPower();
-		sendLostPositionMessage();
+		sendLostPositionMessage(message);
 	}
 
 	private void setPower(Power power) {
 		pilot.tell(new ChangePowerMessage(power), getSelf());
 	}
 
-	private void sendLostPositionMessage() {
-		getContext().parent().tell(new LostPositionMessage(), getSelf());
+	private void sendLostPositionMessage(TrackPartEnteredMessage message) {
+		getContext().parent().tell(new LostPositionMessage(message.getTimestamp(), trackPart.getDirection(), message.getTrackPartDirection()), getSelf());
 	}
 
 	private boolean isValidDirection(TrackPartEnteredMessage message) {
