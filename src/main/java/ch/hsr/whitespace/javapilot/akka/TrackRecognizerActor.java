@@ -44,7 +44,7 @@ public class TrackRecognizerActor extends UntypedActor {
 		recognizedTrack = new Track();
 		tempVelocityBarriers = new ArrayList<>();
 		childActors = new ArrayList<>();
-		this.alreadyCheckedPatterns = alreadyCheckedPatterns;
+		this.alreadyCheckedPatterns = new ArrayList<String>(alreadyCheckedPatterns);
 		LOGGER.info("TrackRecognizer initialized");
 	}
 
@@ -71,10 +71,12 @@ public class TrackRecognizerActor extends UntypedActor {
 	}
 
 	private void handleTrackPatternResponse(MatchingTrackPatternResponseMessage message) {
-		if (message.getPatternConfirmed())
+		if (message.getPatternConfirmed()) {
+			cleanTrackPatternMatchingActors();
 			confirmTrackMatch(message);
-		else
+		} else {
 			removeTrackPatternMatchingActor(getSender());
+		}
 	}
 
 	private void confirmTrackMatch(MatchingTrackPatternResponseMessage message) {
@@ -151,12 +153,19 @@ public class TrackRecognizerActor extends UntypedActor {
 	}
 
 	private void createActorToCheckPossibleMatch(PossibleTrackMatch match) {
-		childActors.add(getContext().actorOf(Props.create(MatchingTrackPatternActor.class, match, currentDirection)));
+		childActors.add(getContext().actorOf(Props.create(MatchingTrackPatternActor.class, getSelf(), match, currentDirection)));
 	}
 
 	private void removeTrackPatternMatchingActor(ActorRef matchingActor) {
 		getContext().stop(matchingActor);
 		childActors.remove(matchingActor);
+	}
+
+	private void cleanTrackPatternMatchingActors() {
+		for (ActorRef matchingActor : childActors) {
+			getContext().stop(matchingActor);
+		}
+		childActors.clear();
 	}
 
 	private void printTrack(PossibleTrackMatch possibleMatch) {

@@ -132,7 +132,7 @@ public class WhiteSpacePilot extends UntypedActor {
 	}
 
 	private void startDrivingActors() {
-		this.trackRecognizerActor = getContext().actorOf(Props.create(TrackRecognizerActor.class, getSelf(), alreadyCheckedPatterns));
+		this.trackRecognizerActor = getContext().actorOf(Props.create(TrackRecognizerActor.class, getSelf(), new ArrayList<String>(alreadyCheckedPatterns)));
 		this.drivingCoordinatorActor = getContext().actorOf(Props.create(DrivingCoordinatorActor.class, getSelf(), properties.getInitialPower()));
 	}
 

@@ -19,18 +19,20 @@ public class MatchingTrackPatternActor extends UntypedActor {
 
 	private final Logger LOGGER = LoggerFactory.getLogger(MatchingTrackPatternActor.class);
 
+	private ActorRef trackRecognizer;
 	private PossibleTrackMatch match;
 	private Iterator<TrackPart> trackPartIterator;
 	private boolean matchFailed = false;
 
-	public MatchingTrackPatternActor(PossibleTrackMatch trackMatch, Direction currentDirection) {
+	public MatchingTrackPatternActor(ActorRef trackRecognizer, PossibleTrackMatch trackMatch, Direction currentDirection) {
+		this.trackRecognizer = trackRecognizer;
 		this.match = trackMatch;
 		this.trackPartIterator = match.getTrackParts().iterator();
 		handleNewDirection(currentDirection);
 	}
 
-	public static Props props(ActorRef pilot, PossibleTrackMatch trackMatch, Direction currentDirection) {
-		return Props.create(MatchingTrackPatternActor.class, () -> new MatchingTrackPatternActor(trackMatch, currentDirection));
+	public static Props props(ActorRef trackRecognizer, PossibleTrackMatch trackMatch, Direction currentDirection) {
+		return Props.create(MatchingTrackPatternActor.class, () -> new MatchingTrackPatternActor(trackRecognizer, trackMatch, currentDirection));
 	}
 
 	@Override
@@ -60,7 +62,7 @@ public class MatchingTrackPatternActor extends UntypedActor {
 	}
 
 	private void sendResponseMessage(boolean patternConfirmed) {
-		getContext().parent().tell(new MatchingTrackPatternResponseMessage(match, patternConfirmed), getSelf());
+		trackRecognizer.tell(new MatchingTrackPatternResponseMessage(match, patternConfirmed), getSelf());
 	}
 
 	private boolean isNextDirectionCorrect(Direction newDirection, TrackPart nextPart) {
