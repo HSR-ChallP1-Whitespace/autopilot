@@ -35,11 +35,13 @@ public class TrackRecognizerActor extends UntypedActor {
 	private List<VelocityBarrier> tempVelocityBarriers;
 	private Direction currentDirection;
 	private List<ActorRef> childActors;
+	private List<String> alreadyCheckedPatterns;
 
 	public TrackRecognizerActor() {
 		recognizedTrack = new Track();
 		tempVelocityBarriers = new ArrayList<>();
 		childActors = new ArrayList<>();
+		alreadyCheckedPatterns = new ArrayList<>();
 		LOGGER.info("TrackRecognizer initialized");
 	}
 
@@ -137,8 +139,12 @@ public class TrackRecognizerActor extends UntypedActor {
 	}
 
 	private void testPossibleMatch(PossibleTrackMatch possibleMatch) {
-		LOGGER.info("Check possible pattern: " + StringUtil.getPatternString(possibleMatch.getTrackParts()));
-		createActorToCheckPossibleMatch(possibleMatch);
+		String pattern = StringUtil.getPatternString(possibleMatch.getTrackParts());
+		if (!alreadyCheckedPatterns.contains(pattern)) {
+			LOGGER.info("Check possible pattern: " + pattern);
+			createActorToCheckPossibleMatch(possibleMatch);
+			alreadyCheckedPatterns.add(pattern);
+		}
 	}
 
 	private void createActorToCheckPossibleMatch(PossibleTrackMatch match) {
