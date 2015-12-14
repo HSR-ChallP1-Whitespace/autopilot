@@ -1,7 +1,5 @@
 package ch.hsr.whitespace.javapilot.akka;
 
-import java.util.concurrent.TimeUnit;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -10,7 +8,6 @@ import com.zuehlke.carrera.relayapi.messages.PenaltyMessage;
 import akka.actor.ActorRef;
 import akka.actor.Props;
 import akka.actor.UntypedActor;
-import ch.hsr.whitespace.javapilot.akka.messages.BrakeDownMessage;
 import ch.hsr.whitespace.javapilot.akka.messages.ChainTrackPartActorsMessage;
 import ch.hsr.whitespace.javapilot.akka.messages.ChangePowerMessage;
 import ch.hsr.whitespace.javapilot.akka.messages.DirectionChangedMessage;
@@ -22,7 +19,6 @@ import ch.hsr.whitespace.javapilot.akka.messages.SpeedupMessage;
 import ch.hsr.whitespace.javapilot.akka.messages.TrackPartEnteredMessage;
 import ch.hsr.whitespace.javapilot.model.Power;
 import ch.hsr.whitespace.javapilot.model.track.TrackPart;
-import scala.concurrent.duration.Duration;
 
 public class TrackPartDrivingActor extends UntypedActor {
 
@@ -75,8 +71,6 @@ public class TrackPartDrivingActor extends UntypedActor {
 			startSpeedingUp((SpeedupMessage) message);
 		} else if (message instanceof SpeedupFactorFromNextPartMessage) {
 			handleSpeedupFactor((SpeedupFactorFromNextPartMessage) message);
-		} else if (message instanceof BrakeDownMessage) {
-			brakeDown((BrakeDownMessage) message);
 		} else if (message instanceof PenaltyMessage && iAmDriving) {
 			handlePenalty((PenaltyMessage) message);
 		}
@@ -91,7 +85,7 @@ public class TrackPartDrivingActor extends UntypedActor {
 	}
 
 	private void handlePenalty(PenaltyMessage message) {
-		LOGGER.warn("Driver #" + trackPart.getId() + ": got PENALTY");
+		LOGGER.warn((char) 27 + "[31m" + "Driver #" + trackPart.getId() + ": got PENALTY" + (char) 27 + "[0m");
 		hasPenalty = true;
 		speedupFactor = (message.getActualSpeed() / message.getSpeedLimit()) - 1.0;
 		handleTooHighSpeed();
@@ -100,12 +94,10 @@ public class TrackPartDrivingActor extends UntypedActor {
 	private void handleTooHighSpeed() {
 		lastTurnWasTooFast = true;
 		if (!iAmSpeedingUp) {
+			LOGGER.info("Driver#" + trackPart.getId() + " Last time until brake: " + timeUntilBrake);
 			timeUntilBrake = timeUntilBrake + (int) (timeUntilBrake * -speedupFactor);
+			LOGGER.info("Driver#" + trackPart.getId() + " New time until brake: " + timeUntilBrake + " (speedup-factor: " + speedupFactor + ")");
 		}
-	}
-
-	private void brakeDown(BrakeDownMessage message) {
-		setPower(message.getBrakeDownPower());
 	}
 
 	private void handleSpeedupFactor(SpeedupFactorFromNextPartMessage message) {
@@ -131,8 +123,11 @@ public class TrackPartDrivingActor extends UntypedActor {
 			LOGGER.info("Was last round too fast?: " + lastTurnWasTooFast);
 			if (!lastTurnWasTooFast) {
 				timeUtilBrakeDownFactor = timeUtilBrakeDownFactor + 0.1;
-				currentBrakeDownPower = new Power(currentBrakeDownPower.getValue() - (int) (Math.max(currentBrakeDownPower.getValue() * 0.1, 10)));
-			} else if (!canWeReduceBrakeDownPower()) {
+			} else if (canWeReduceBrakeDownPower()) {
+				int brakeDownValue = (int) (Math.max(currentBrakeDownPower.getValue() * 0.1, 10));
+				LOGGER.info("BRAKE DOWN VALUE: " + brakeDownValue);
+				currentBrakeDownPower = new Power(currentBrakeDownPower.getValue() - brakeDownValue);
+			} else {
 				timeUtilBrakeDownFactor = timeUtilBrakeDownFactor - 0.1;
 				stopSpeedup();
 			}
@@ -172,22 +167,20 @@ public class TrackPartDrivingActor extends UntypedActor {
 	private void scheduleBrake(long timeUntilBrake, Power brakeDownPower) {
 		if (brakeDownPower.getValue() == currentPower.getValue())
 			return;
-
-		getContext().system().scheduler().scheduleOnce(Duration.create(timeUntilBrake, TimeUnit.MILLISECONDS), new Runnable() {
-			@Override
-			public void run() {
-				getSelf().tell(new BrakeDownMessage(brakeDownPower), getSelf());
-			}
-		}, getContext().dispatcher());
+		pilot.tell(new ChangePowerMessage(brakeDownPower, timeUntilBrake), getSelf());
 	}
 
 	private void resetPower() {
-		setPower(initialPower);
+		Power power = new Power(initialPower.getValue());
+		LOGGER.info("Reset-Power: " + power.getValue());
+		setPower(power);
 	}
 
 	private void enterTrackPart(TrackPartEnteredMessage message) {
-		LOGGER.info("DRIVER#" + trackPart.getId() + "(" + getSelf() + ") GOT ENTERED MESSAGE WITH DIRECTION '" + message.getTrackPartDirection() + "' FROM SENDER '" + getSender()
-				+ "'");
+		// LOGGER.info("DRIVER#" + trackPart.getId() + "(" + getSelf() + ") GOT
+		// ENTERED MESSAGE WITH DIRECTION '" + message.getTrackPartDirection() +
+		// "' FROM SENDER '" + getSender()
+		// + "'");
 		if (!isValidDirection(message)) {
 			handleLostPosition(message);
 			return;
@@ -207,6 +200,7 @@ public class TrackPartDrivingActor extends UntypedActor {
 	}
 
 	private void setPower(Power power) {
+		LOGGER.info("Driver#" + trackPart.getId() + " SET POWER TO " + power.getValue());
 		pilot.tell(new ChangePowerMessage(power), getSelf());
 	}
 
@@ -219,8 +213,10 @@ public class TrackPartDrivingActor extends UntypedActor {
 	}
 
 	private void leaveTrackPart(DirectionChangedMessage message) {
-		LOGGER.info(
-				"DRIVER#" + trackPart.getId() + "(" + getSelf() + ") GOT LEAVED MESSAGE WITH NEW DIRECTION '" + message.getNewDirection() + "' FROM SENDER '" + getSender() + "'");
+		// LOGGER.info(
+		// "DRIVER#" + trackPart.getId() + "(" + getSelf() + ") GOT LEAVED
+		// MESSAGE WITH NEW DIRECTION '" + message.getNewDirection() + "' FROM
+		// SENDER '" + getSender() + "'");
 		iAmDriving = false;
 		notifyNextTrackPartActor(message);
 		lastDuration = trackPart.getDuration();

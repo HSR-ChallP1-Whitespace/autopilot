@@ -12,6 +12,10 @@ public class Power {
 
 	private int value;
 
+	public Power(Power power) {
+		this(power.getValue());
+	}
+
 	public Power(int value) {
 		this.value = value;
 		if (value > MAX_POWER)

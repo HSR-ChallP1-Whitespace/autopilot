@@ -82,6 +82,7 @@ public class DrivingCoordinatorActor extends UntypedActor {
 
 	private void handleLostPosition(LostPositionMessage message) {
 		lostPosition = true;
+		this.whitespacePilot.tell(message, getSender());
 		if (!isDetectedDirectionPartOfTrackPart(message.getDetectedDirection())) {
 			restart();
 			LOGGER.warn("The direction '" + message.getDetectedDirection() + "' is not part of our pattern. :-/ Start over...");
@@ -123,12 +124,15 @@ public class DrivingCoordinatorActor extends UntypedActor {
 	}
 
 	private void speedupNextStraightPart() {
-		// if (straightsIterator.hasNext()) {
+		if (straightsIterator.hasNext())
+			trackPartActors.get(straightsIterator.next().getId()).tell(new SpeedupMessage(true), getSelf());
+		// {
 		// for the moment, try to speedup all of them...
-		while (straightsIterator.hasNext()) {
-			ActorRef firstStraightPartActor = trackPartActors.get(straightsIterator.next().getId());
-			firstStraightPartActor.tell(new SpeedupMessage(true), getSelf());
-		}
+		// while (straightsIterator.hasNext()) {
+		// ActorRef firstStraightPartActor =
+		// trackPartActors.get(straightsIterator.next().getId());
+		// firstStraightPartActor.tell(new SpeedupMessage(true), getSelf());
+		// }
 	}
 
 	private void forwardMessagesToDriverActors(Object message) {

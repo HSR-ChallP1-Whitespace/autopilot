@@ -2,6 +2,7 @@ package ch.hsr.whitespace.javapilot.akka;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -15,17 +16,20 @@ import com.zuehlke.carrera.relayapi.messages.SensorEvent;
 import com.zuehlke.carrera.relayapi.messages.VelocityMessage;
 
 import akka.actor.ActorRef;
+import akka.actor.Cancellable;
 import akka.actor.Props;
 import akka.actor.UntypedActor;
 import ch.hsr.whitespace.javapilot.akka.messages.ChangePowerMessage;
 import ch.hsr.whitespace.javapilot.akka.messages.CheckedPatternsMessage;
 import ch.hsr.whitespace.javapilot.akka.messages.DirectionChangedMessage;
 import ch.hsr.whitespace.javapilot.akka.messages.InitializePositionDetection;
+import ch.hsr.whitespace.javapilot.akka.messages.LostPositionMessage;
 import ch.hsr.whitespace.javapilot.akka.messages.RestartWithTrackRecognitionMessage;
 import ch.hsr.whitespace.javapilot.akka.messages.TrackRecognitionFinished;
 import ch.hsr.whitespace.javapilot.config.PilotProperties;
 import ch.hsr.whitespace.javapilot.model.Power;
 import ch.hsr.whitespace.javapilot.util.MessageUtil;
+import scala.concurrent.duration.Duration;
 
 /**
  * Main Pilot-Actor
@@ -46,6 +50,7 @@ public class WhiteSpacePilot extends UntypedActor {
 	private boolean trackRecognitionFinished = false;
 	private Power currentPower;
 	private List<String> alreadyCheckedPatterns;
+	private Cancellable cancelledPowerChange;
 
 	public WhiteSpacePilot(ActorRef pilot, PilotProperties properties) {
 		this.pilot = pilot;
@@ -66,14 +71,21 @@ public class WhiteSpacePilot extends UntypedActor {
 		} else if (message instanceof TrackRecognitionFinished) {
 			handleTrackRecognitionFinished((TrackRecognitionFinished) message);
 		} else if (message instanceof ChangePowerMessage) {
-			setCurrentPower(((ChangePowerMessage) message).getNewPower());
+			changePower((ChangePowerMessage) message);
 		} else if (message instanceof RestartWithTrackRecognitionMessage) {
 			restart();
 		} else if (message instanceof CheckedPatternsMessage) {
 			handleAlreadyCheckedPatterns((CheckedPatternsMessage) message);
+		} else if (message instanceof LostPositionMessage) {
+			handleLostPosition();
 		} else {
 			unhandled(message);
 		}
+	}
+
+	private void handleLostPosition() {
+		if (cancelledPowerChange != null)
+			cancelledPowerChange.cancel();
 	}
 
 	private void handleAlreadyCheckedPatterns(CheckedPatternsMessage message) {
@@ -115,8 +127,22 @@ public class WhiteSpacePilot extends UntypedActor {
 		pilot.tell(new PowerAction(currentPower.getValue()), getSelf());
 	}
 
-	private void setCurrentPower(Power power) {
-		currentPower = power;
+	private void changePower(ChangePowerMessage message) {
+		if (message.getDelayInMillis() > 0) {
+			this.cancelledPowerChange = getContext().system().scheduler().scheduleOnce(Duration.create(message.getDelayInMillis(), TimeUnit.MILLISECONDS), new Runnable() {
+				@Override
+				public void run() {
+					getSelf().tell(new ChangePowerMessage(message.getNewPower()), getSelf());
+				}
+			}, getContext().dispatcher());
+		} else {
+			setCurrentPower(message.getNewPower());
+		}
+	}
+
+	private void setCurrentPower(Power newPower) {
+		currentPower = new Power(newPower);
+		LOGGER.info("Set current power: " + currentPower.getValue());
 	}
 
 	@Override
