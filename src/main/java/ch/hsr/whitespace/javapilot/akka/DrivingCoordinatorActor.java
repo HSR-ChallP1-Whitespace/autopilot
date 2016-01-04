@@ -209,7 +209,7 @@ public class DrivingCoordinatorActor extends UntypedActor {
 	}
 
 	private void createTrackPartActor(int idCounter, TrackPart trackPart) {
-		ActorRef actor = getContext().actorOf(Props.create(TrackPartDrivingActor.class, whitespacePilot, trackPart, initialPower));
+		ActorRef actor = getContext().actorOf(Props.create(AbstractTrackPartDrivingActor.getDrivingActorClass(trackPart.getDirection()), whitespacePilot, trackPart, initialPower));
 		trackPartActors.put(idCounter, actor);
 	}
 

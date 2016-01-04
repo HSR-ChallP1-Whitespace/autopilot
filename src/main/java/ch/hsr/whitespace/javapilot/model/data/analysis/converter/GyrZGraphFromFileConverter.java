@@ -39,7 +39,6 @@ public class GyrZGraphFromFileConverter {
 
 	public VelocityGraph getVelocityGraph() {
 		VelocityGraph graph = VelocityGraph.createInstance();
-		MovingAverages averages = new MovingAverages();
 		for (VelocityMessage velocityMessage : race.getVelocities()) {
 			graph.storeVelocity(velocityMessage.getTimeStamp(), velocityMessage.getVelocity());
 		}
