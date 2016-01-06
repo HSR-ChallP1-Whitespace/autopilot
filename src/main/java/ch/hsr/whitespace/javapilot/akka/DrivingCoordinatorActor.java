@@ -1,7 +1,6 @@
 package ch.hsr.whitespace.javapilot.akka;
 
 import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
@@ -25,6 +24,9 @@ import ch.hsr.whitespace.javapilot.akka.messages.RestartWithTrackRecognitionMess
 import ch.hsr.whitespace.javapilot.akka.messages.SpeedupFinishedMessage;
 import ch.hsr.whitespace.javapilot.akka.messages.SpeedupMessage;
 import ch.hsr.whitespace.javapilot.akka.messages.TrackPartEnteredMessage;
+import ch.hsr.whitespace.javapilot.algorithms.speedup_strategy.SpeedupOrderStrategy;
+import ch.hsr.whitespace.javapilot.algorithms.speedup_strategy.SpeedupOrderStrategyFactory;
+import ch.hsr.whitespace.javapilot.algorithms.speedup_strategy.SpeedupOrderStrategyFactory.SpeedupOrderStrategyType;
 import ch.hsr.whitespace.javapilot.model.track.Direction;
 import ch.hsr.whitespace.javapilot.model.track.TrackPart;
 import ch.hsr.whitespace.javapilot.model.track.VelocityBarrier;
@@ -36,6 +38,7 @@ public class DrivingCoordinatorActor extends UntypedActor {
 	private final Logger LOGGER = LoggerFactory.getLogger(DrivingCoordinatorActor.class);
 
 	private static final int MAX_LOSTS_WITHIN_10_SECS = 4;
+	private static final SpeedupOrderStrategyType SPEEDUP_STRATEGY = SpeedupOrderStrategyType.ALL_TOGETHER;
 
 	private ActorRef whitespacePilot;
 	private Map<Integer, TrackPart> trackParts;
@@ -46,8 +49,8 @@ public class DrivingCoordinatorActor extends UntypedActor {
 	private boolean lostPosition = false;
 	private int initialPower;
 	private List<TrackPart> straights;
-	private Iterator<TrackPart> straightsIterator;
 	private List<LostPositionMessage> lostMessages;
+	private SpeedupOrderStrategy speedupStrategy;
 
 	public static Props props(ActorRef pilot, int initialPower) {
 		return Props.create(DrivingCoordinatorActor.class, () -> new DrivingCoordinatorActor(pilot, initialPower));
@@ -56,9 +59,9 @@ public class DrivingCoordinatorActor extends UntypedActor {
 	public DrivingCoordinatorActor(ActorRef whitespacePilot, int initialPower) {
 		this.whitespacePilot = whitespacePilot;
 		this.initialPower = initialPower;
-		trackParts = new TreeMap<>();
-		trackPartActors = new TreeMap<>();
-		lostMessages = new ArrayList<>();
+		this.trackParts = new TreeMap<>();
+		this.trackPartActors = new TreeMap<>();
+		this.lostMessages = new ArrayList<>();
 	}
 
 	@Override
@@ -68,7 +71,7 @@ public class DrivingCoordinatorActor extends UntypedActor {
 			initializeTrackPartMap(((InitializePositionDetection) message).getTrackParts());
 			initializeBarriers();
 			trackPartActors.get(1).tell(new TrackPartEnteredMessage(0, trackParts.get(1).getDirection()), getSelf());
-			speedupFirstStraightPart();
+			startSpeedingUp();
 		} else if (message instanceof VelocityMessage) {
 			handleVelocityMessage((VelocityMessage) message);
 		} else if (message instanceof PrintTrackPositionMessage) {
@@ -76,8 +79,12 @@ public class DrivingCoordinatorActor extends UntypedActor {
 		} else if (message instanceof LostPositionMessage) {
 			handleLostPosition((LostPositionMessage) message);
 		} else if (message instanceof SpeedupFinishedMessage) {
-			speedupNextStraightPart();
+			speedupStrategy.speedupFinished(((SpeedupFinishedMessage) message).getTrackPart());
 		}
+	}
+
+	public void speedupTrackPartById(int trackPartId) {
+		trackPartActors.get(trackPartId).tell(new SpeedupMessage(true), getSelf());
 	}
 
 	private void handleLostPosition(LostPositionMessage message) {
@@ -117,22 +124,10 @@ public class DrivingCoordinatorActor extends UntypedActor {
 		return false;
 	}
 
-	private void speedupFirstStraightPart() {
+	private void startSpeedingUp() {
 		this.straights = TrackPartUtil.getStraightPartsByDuration(trackParts.values());
-		this.straightsIterator = straights.iterator();
-		speedupNextStraightPart();
-	}
-
-	private void speedupNextStraightPart() {
-		if (straightsIterator.hasNext())
-			trackPartActors.get(straightsIterator.next().getId()).tell(new SpeedupMessage(true), getSelf());
-		// {
-		// for the moment, try to speedup all of them...
-		// while (straightsIterator.hasNext()) {
-		// ActorRef firstStraightPartActor =
-		// trackPartActors.get(straightsIterator.next().getId());
-		// firstStraightPartActor.tell(new SpeedupMessage(true), getSelf());
-		// }
+		speedupStrategy = new SpeedupOrderStrategyFactory(straights, this).createStrategy(SPEEDUP_STRATEGY);
+		speedupStrategy.startSpeedup();
 	}
 
 	private void forwardMessagesToDriverActors(Object message) {
