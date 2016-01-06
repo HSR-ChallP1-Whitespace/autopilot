@@ -26,6 +26,7 @@ import ch.hsr.whitespace.javapilot.akka.messages.InitializePositionDetection;
 import ch.hsr.whitespace.javapilot.akka.messages.LostPositionMessage;
 import ch.hsr.whitespace.javapilot.akka.messages.RestartWithTrackRecognitionMessage;
 import ch.hsr.whitespace.javapilot.akka.messages.TrackRecognitionFinished;
+import ch.hsr.whitespace.javapilot.algorithms.MovingAverages;
 import ch.hsr.whitespace.javapilot.config.PilotProperties;
 import ch.hsr.whitespace.javapilot.model.Power;
 import ch.hsr.whitespace.javapilot.util.MessageUtil;
@@ -39,7 +40,8 @@ public class WhiteSpacePilot extends UntypedActor {
 
 	private final Logger LOGGER = LoggerFactory.getLogger(WhiteSpacePilot.class);
 
-	private PilotProperties properties;
+	private static final int POWERUP_STEPS_IF_STARTING_PROBLEMS = 2;
+	private static final int ADDITIONAL_POWER_INCREASE_AFTER_STARTING_PROBLEMS = 10;
 
 	private ActorRef pilot;
 	private ActorRef dataAnalyzerActor;
@@ -49,14 +51,19 @@ public class WhiteSpacePilot extends UntypedActor {
 	private ActorRef directionActor;
 	private boolean trackRecognitionFinished = false;
 	private Power currentPower;
+	private Power initialPower;
+	private boolean carStarted = false;
+	private boolean hadStartingProblems = false;
 	private List<String> alreadyCheckedPatterns;
 	private Cancellable cancelledPowerChange;
+	private MovingAverages gyrzValues;
 
 	public WhiteSpacePilot(ActorRef pilot, PilotProperties properties) {
 		this.pilot = pilot;
-		this.properties = properties;
+		this.initialPower = new Power(properties.getInitialPower());
 		this.currentPower = new Power(properties.getInitialPower());
 		this.alreadyCheckedPatterns = new ArrayList<>();
+		this.gyrzValues = new MovingAverages();
 	}
 
 	public static Props props(ActorRef pilot, PilotProperties properties) {
@@ -65,7 +72,8 @@ public class WhiteSpacePilot extends UntypedActor {
 
 	@Override
 	public void onReceive(Object message) throws Exception {
-		forwardMessagesToChildren(message);
+		if (carStarted)
+			forwardMessagesToChildren(message);
 		if (message instanceof SensorEvent) {
 			handleSensorEvent((SensorEvent) message);
 		} else if (message instanceof TrackRecognitionFinished) {
@@ -96,7 +104,7 @@ public class WhiteSpacePilot extends UntypedActor {
 		LOGGER.warn("Restart whole track recognition :-/");
 		restartDrivingActors();
 		trackRecognitionFinished = false;
-		currentPower = new Power(properties.getInitialPower());
+		setCurrentPower(initialPower);
 	}
 
 	private void forwardMessagesToChildren(Object message) {
@@ -124,7 +132,42 @@ public class WhiteSpacePilot extends UntypedActor {
 	}
 
 	private void handleSensorEvent(SensorEvent event) {
+		gyrzValues.shift(event.getG()[2]);
 		pilot.tell(new PowerAction(currentPower.getValue()), getSelf());
+
+		if (gyrzValues.isHistoryInitialized())
+			checkIfCarIsStanding();
+	}
+
+	private void checkIfCarIsStanding() {
+		if (gyrzValues.isCarStanding()) {
+			handleCarStanding();
+		} else if (!carStarted) {
+			carStarted = true;
+			increasePowerIfWeHadStartingProblems();
+			handleRaceStarted();
+		}
+	}
+
+	private void increasePowerIfWeHadStartingProblems() {
+		if (hadStartingProblems) {
+			initialPower = new Power(initialPower.getValue() + ADDITIONAL_POWER_INCREASE_AFTER_STARTING_PROBLEMS);
+			setCurrentPower(initialPower);
+		}
+	}
+
+	private void handleRaceStarted() {
+		initChildActors();
+	}
+
+	private void handleCarStanding() {
+		// did car already drived once? If not, we had starting problems
+		// (initial-power too low)
+		if (!carStarted) {
+			hadStartingProblems = true;
+			initialPower = new Power(initialPower.getValue() + POWERUP_STEPS_IF_STARTING_PROBLEMS);
+		}
+		setCurrentPower(initialPower);
 	}
 
 	private void changePower(ChangePowerMessage message) {
@@ -145,11 +188,6 @@ public class WhiteSpacePilot extends UntypedActor {
 		LOGGER.info("Set current power: " + currentPower.getValue());
 	}
 
-	@Override
-	public void preStart() {
-		initChildActors();
-	}
-
 	private void restartDrivingActors() {
 		if (!trackRecognitionFinished)
 			getContext().stop(trackRecognizerActor);
@@ -159,7 +197,7 @@ public class WhiteSpacePilot extends UntypedActor {
 
 	private void startDrivingActors() {
 		this.trackRecognizerActor = getContext().actorOf(Props.create(TrackRecognizerActor.class, getSelf(), new ArrayList<String>(alreadyCheckedPatterns)));
-		this.drivingCoordinatorActor = getContext().actorOf(Props.create(DrivingCoordinatorActor.class, getSelf(), properties.getInitialPower()));
+		this.drivingCoordinatorActor = getContext().actorOf(Props.create(DrivingCoordinatorActor.class, getSelf(), initialPower.getValue()));
 	}
 
 	private void initChildActors() {
