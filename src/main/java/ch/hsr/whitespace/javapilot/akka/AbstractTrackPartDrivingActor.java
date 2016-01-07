@@ -12,6 +12,7 @@ import ch.hsr.whitespace.javapilot.akka.messages.LostPositionMessage;
 import ch.hsr.whitespace.javapilot.akka.messages.PrintTrackPositionMessage;
 import ch.hsr.whitespace.javapilot.akka.messages.SpeedupFactorFromNextPartMessage;
 import ch.hsr.whitespace.javapilot.akka.messages.SpeedupMessage;
+import ch.hsr.whitespace.javapilot.akka.messages.StartDrivingMessage;
 import ch.hsr.whitespace.javapilot.akka.messages.TrackPartEnteredMessage;
 import ch.hsr.whitespace.javapilot.model.Power;
 import ch.hsr.whitespace.javapilot.model.track.Direction;
@@ -22,14 +23,17 @@ public abstract class AbstractTrackPartDrivingActor extends UntypedActor {
 	private final Logger LOGGER = LoggerFactory.getLogger(AbstractTrackPartDrivingActor.class);
 
 	protected ActorRef pilot;
+	protected TrackPart trackPart;
+	protected TrackPart previousTrackPart;
 	protected ActorRef previousTrackPartActor;
+	protected TrackPart nextTrackPart;
 	protected ActorRef nextTrackPartActor;
+	protected boolean trackPartEntered = false;
 	protected boolean iAmDriving = false;
 	protected boolean iAmSpeedingUp = false;
 	protected boolean hasPenalty = false;
 	protected boolean drivingWithConstantPower = true;
 	protected long trackPartEntryTime = 0;
-	protected TrackPart trackPart;
 	protected Power initialPower;
 	protected long lastDuration;
 	protected Power currentPower;
@@ -52,11 +56,12 @@ public abstract class AbstractTrackPartDrivingActor extends UntypedActor {
 	public void onReceive(Object message) throws Exception {
 		if (message instanceof TrackPartEnteredMessage) {
 			enterTrackPart((TrackPartEnteredMessage) message);
-		} else if (message instanceof DirectionChangedMessage && iAmDriving) {
+		} else if (message instanceof DirectionChangedMessage && trackPartEntered) {
 			leaveTrackPart((DirectionChangedMessage) message);
+		} else if (message instanceof StartDrivingMessage) {
+			startDriving();
 		} else if (message instanceof ChainTrackPartActorsMessage) {
-			this.previousTrackPartActor = ((ChainTrackPartActorsMessage) message).getPreviousTrackPartActorRef();
-			this.nextTrackPartActor = ((ChainTrackPartActorsMessage) message).getNextTrackPartActorRef();
+			handleTrackPartChaining((ChainTrackPartActorsMessage) message);
 		} else if (message instanceof SpeedupMessage) {
 			startSpeedingUp((SpeedupMessage) message);
 		}
@@ -66,7 +71,7 @@ public abstract class AbstractTrackPartDrivingActor extends UntypedActor {
 		// override in concrete implementation
 	}
 
-	private void enterTrackPart(TrackPartEnteredMessage message) {
+	protected void enterTrackPart(TrackPartEnteredMessage message) {
 		// LOGGER.info("DRIVER#" + trackPart.getId() + "(" + getSelf() + ") GOT
 		// ENTERED MESSAGE WITH DIRECTION '" + message.getTrackPartDirection() +
 		// "' FROM SENDER '" + getSender()
@@ -75,21 +80,34 @@ public abstract class AbstractTrackPartDrivingActor extends UntypedActor {
 			handleLostPosition(message);
 			return;
 		}
-		iAmDriving = true;
+		trackPartEntered = true;
 		hasPenalty = false;
 		trackPartEntryTime = message.getTimestamp();
 		tellParentToPrintPosition();
 		if (!message.isPositionCorrectionMessage())
-			evaluateAndSetNewPower();
+			startDriving();
 	}
 
-	private void leaveTrackPart(DirectionChangedMessage message) {
+	protected void startDriving() {
+		if (!iAmDriving) {
+			iAmDriving = true;
+			evaluateAndSetNewPower();
+		}
+	}
+
+	protected void stopDriving() {
+		iAmDriving = false;
+	}
+
+	protected void leaveTrackPart(DirectionChangedMessage message) {
 		// LOGGER.info(
 		// "DRIVER#" + trackPart.getId() + "(" + getSelf() + ") GOT LEAVED
 		// MESSAGE WITH NEW DIRECTION '" + message.getNewDirection() + "' FROM
 		// SENDER '" + getSender() + "'");
-		iAmDriving = false;
-		notifyNextTrackPartActor(message);
+		trackPartEntered = false;
+		stopDriving();
+		enterNextTrackPart(message);
+		tellNextTrackPartToDrive();
 		lastDuration = trackPart.getDuration();
 		updateTrackPartTimestamps(message.getTimeStamp());
 		tellSpeedupFactorToPreviousTrackPart(lastDuration, trackPart.getDuration());
@@ -132,8 +150,12 @@ public abstract class AbstractTrackPartDrivingActor extends UntypedActor {
 		getContext().parent().tell(new PrintTrackPositionMessage(trackPart.getId()), getSelf());
 	}
 
-	private void notifyNextTrackPartActor(DirectionChangedMessage message) {
+	private void enterNextTrackPart(DirectionChangedMessage message) {
 		nextTrackPartActor.tell(new TrackPartEnteredMessage(message.getTimeStamp(), message.getNewDirection()), getSelf());
+	}
+
+	protected void tellNextTrackPartToDrive() {
+		nextTrackPartActor.tell(new StartDrivingMessage(), getSelf());
 	}
 
 	private void updateTrackPartTimestamps(long currentTimeStamp) {
@@ -145,5 +167,12 @@ public abstract class AbstractTrackPartDrivingActor extends UntypedActor {
 
 	private void tellSpeedupFactorToPreviousTrackPart(long lastDuration, long currentDuration) {
 		previousTrackPartActor.tell(new SpeedupFactorFromNextPartMessage(lastDuration, currentDuration), getSelf());
+	}
+
+	private void handleTrackPartChaining(ChainTrackPartActorsMessage message) {
+		this.previousTrackPart = message.getPreviousTrackPart();
+		this.previousTrackPartActor = message.getPreviousTrackPartActorRef();
+		this.nextTrackPart = message.getNextTrackPart();
+		this.nextTrackPartActor = message.getNextTrackPartActorRef();
 	}
 }

@@ -38,7 +38,7 @@ public class DrivingCoordinatorActor extends UntypedActor {
 	private final Logger LOGGER = LoggerFactory.getLogger(DrivingCoordinatorActor.class);
 
 	private static final int MAX_LOSTS_WITHIN_10_SECS = 4;
-	private static final SpeedupOrderStrategyType SPEEDUP_STRATEGY = SpeedupOrderStrategyType.ALL_TOGETHER;
+	private static final SpeedupOrderStrategyType SPEEDUP_STRATEGY = SpeedupOrderStrategyType.ONE_AFTER_ONE;
 
 	private ActorRef whitespacePilot;
 	private Map<Integer, TrackPart> trackParts;
@@ -199,7 +199,8 @@ public class DrivingCoordinatorActor extends UntypedActor {
 				nextId = 1;
 			}
 			LOGGER.info("Chain trackpart-actor with id '" + i + "': previous='" + previousId + "', next='" + nextId + "'");
-			trackPartActors.get(i).tell(new ChainTrackPartActorsMessage(trackPartActors.get(previousId), trackPartActors.get(nextId)), getSelf());
+			trackPartActors.get(i).tell(
+					new ChainTrackPartActorsMessage(trackParts.get(previousId), trackPartActors.get(previousId), trackParts.get(nextId), trackPartActors.get(nextId)), getSelf());
 		}
 	}
 
