@@ -17,6 +17,9 @@ public class StraightDrivingActor extends AbstractTrackPartDrivingActor {
 
 	private final Logger LOGGER = LoggerFactory.getLogger(StraightDrivingActor.class);
 
+	private static final int MINIMAL_BRAKE_DOWN_POWER = 30;
+	private static final double SPEEDUP_DURATION_STEPS = 0.05;
+
 	private Power currentBrakeDownPower;
 	private boolean lastTurnWasTooFast = false;
 	private long timeUntilBrake;
@@ -82,13 +85,13 @@ public class StraightDrivingActor extends AbstractTrackPartDrivingActor {
 			Power maxPower = new Power(Power.MAX_POWER);
 			LOGGER.info("Was last round too fast?: " + lastTurnWasTooFast);
 			if (!lastTurnWasTooFast) {
-				timeUtilBrakeDownFactor = timeUtilBrakeDownFactor + 0.1;
+				timeUtilBrakeDownFactor = timeUtilBrakeDownFactor + SPEEDUP_DURATION_STEPS;
 			} else if (canWeReduceBrakeDownPower()) {
-				int brakeDownValue = (int) (Math.max(currentBrakeDownPower.getValue() * 0.1, 10));
+				int brakeDownValue = (int) (Math.max(currentBrakeDownPower.getValue() * SPEEDUP_DURATION_STEPS, 10));
 				LOGGER.info("BRAKE DOWN VALUE: " + brakeDownValue);
 				currentBrakeDownPower = new Power(currentBrakeDownPower.getValue() - brakeDownValue);
 			} else {
-				timeUtilBrakeDownFactor = timeUtilBrakeDownFactor - 0.1;
+				timeUtilBrakeDownFactor = timeUtilBrakeDownFactor - SPEEDUP_DURATION_STEPS;
 				stopSpeedup();
 			}
 			calculateTimeUntilBrake(currentPower.calcDiffFactor(maxPower));
@@ -101,14 +104,14 @@ public class StraightDrivingActor extends AbstractTrackPartDrivingActor {
 	}
 
 	private boolean canWeReduceBrakeDownPower() {
-		return currentBrakeDownPower.getValue() > Power.MIN_POWER;
+		return currentBrakeDownPower.getValue() > MINIMAL_BRAKE_DOWN_POWER;
 	}
 
 	private void calculateBrakeDownPower() {
+		int lastBrakeDownPower = currentBrakeDownPower.getValue();
 		currentBrakeDownPower = new Power(currentBrakeDownPower.getValue() + (int) (currentBrakeDownPower.getValue() * -speedupFactor));
-		if (currentBrakeDownPower.getValue() < 25)
-			currentBrakeDownPower = new Power(0);
-		LOGGER.info("Calculated brake down power: " + currentBrakeDownPower.getValue());
+		LOGGER.info("Calculated brake down power: " + currentBrakeDownPower.getValue() + " (based on speedupfactor=" + speedupFactor + ", last-brakedown-power="
+				+ lastBrakeDownPower + ")");
 	}
 
 	private void calculateTimeUntilBrake(double powerDiffFactor) {
