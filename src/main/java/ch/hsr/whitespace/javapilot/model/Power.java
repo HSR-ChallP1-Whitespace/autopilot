@@ -45,9 +45,7 @@ public class Power {
 	}
 
 	public double calcDiffFactor(Power otherPower) {
-		double result = new Double(value) / new Double(otherPower.getValue());
-		LOGGER.info("calcDiffFactor: " + result + "(thisPower=" + value + ", otherPower=" + otherPower.getValue() + ")");
-		return result;
+		return (new Double(value) / new Double(otherPower.getValue()));
 	}
 
 	@Override
