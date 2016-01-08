@@ -42,7 +42,7 @@ public class CurveDrivingActor extends AbstractTrackPartDrivingActor {
 	}
 
 	private void scheduleStraightPartDriving() {
-		long delayInMillis = (long) (lastDuration * START_NEXT_STRAIGHT_TIME_PERCENTAGE);
+		long delayInMillis = (long) (trackPart.getDuration() * START_NEXT_STRAIGHT_TIME_PERCENTAGE);
 		getContext().system().scheduler().scheduleOnce(Duration.create(delayInMillis, TimeUnit.MILLISECONDS), new Runnable() {
 			@Override
 			public void run() {
