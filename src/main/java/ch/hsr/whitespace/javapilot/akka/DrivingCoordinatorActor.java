@@ -38,7 +38,7 @@ public class DrivingCoordinatorActor extends UntypedActor {
 	private final Logger LOGGER = LoggerFactory.getLogger(DrivingCoordinatorActor.class);
 
 	private static final int MAX_LOSTS_WITHIN_10_SECS = 4;
-	private static final SpeedupOrderStrategyType SPEEDUP_STRATEGY = SpeedupOrderStrategyType.ONE_AFTER_ONE;
+	private static final SpeedupOrderStrategyType SPEEDUP_STRATEGY = SpeedupOrderStrategyType.ALL_TOGETHER;
 
 	private ActorRef whitespacePilot;
 	private Map<Integer, TrackPart> trackParts;
