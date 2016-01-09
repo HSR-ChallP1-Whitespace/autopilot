@@ -10,6 +10,7 @@ import com.zuehlke.carrera.relayapi.messages.PenaltyMessage;
 
 import akka.actor.ActorRef;
 import akka.actor.Props;
+import ch.hsr.whitespace.javapilot.akka.messages.ChainTrackPartActorsMessage;
 import ch.hsr.whitespace.javapilot.akka.messages.ChangePowerMessage;
 import ch.hsr.whitespace.javapilot.akka.messages.DurationFromNextPartMessage;
 import ch.hsr.whitespace.javapilot.akka.messages.SpeedupFinishedMessage;
@@ -21,13 +22,16 @@ public class StraightDrivingActor extends AbstractTrackPartDrivingActor {
 	private final Logger LOGGER = LoggerFactory.getLogger(StraightDrivingActor.class);
 
 	private static final int MINIMAL_BRAKE_DOWN_POWER = 30;
-	private static final double SPEEDUP_DURATION_STEPS = 0.05;
+	private static final double SPEEDUP_DURATION_INCREASE_STEPS = 0.05;
+	private static final double SPEEDUP_DURATION_DECREASE_STEPS = 0.1;
+
+	private static final double DURATION_INCREASE_STEPS = 0.01;
 
 	private Power currentBrakeDownPower;
 	private long timeUntilBrake;
 	private Map<Integer, PenaltyMessage> penalties;
 	private Map<Integer, DurationFromNextPartMessage> nextTrackPartDurations;
-	private double timeUtilBrakeDownFactor = 0.1;
+	private double timeUntilBrakeDownFactor = 0.1;
 	private boolean speedupPhaseFinished = false;
 
 	public static Props props(ActorRef pilot, TrackPart trackPart, int currentPower) {
@@ -48,6 +52,8 @@ public class StraightDrivingActor extends AbstractTrackPartDrivingActor {
 			handleSpeedupFactor((DurationFromNextPartMessage) message);
 		} else if (message instanceof PenaltyMessage && iAmDriving) {
 			handlePenalty((PenaltyMessage) message);
+		} else if (message instanceof ChainTrackPartActorsMessage) {
+			this.nextTrackPartDurations.put(0, new DurationFromNextPartMessage(((ChainTrackPartActorsMessage) message).getNextTrackPart().getDuration()));
 		}
 	}
 
@@ -61,19 +67,19 @@ public class StraightDrivingActor extends AbstractTrackPartDrivingActor {
 	}
 
 	private double calcSpeedupFactorByTrackDurations() {
-		if (!nextTrackPartDurations.containsKey(1)) {
-			LOGGER.error("The initial track-part-duration does not exist!");
+		if (!nextTrackPartDurations.containsKey(0)) {
+			LOGGER.error("Driver#" + trackPart.getId() + " The initial track-part-duration does not exist!");
 			return 0.0;
 		}
 		if (!nextTrackPartDurations.containsKey(roundCounter - 1)) {
-			LOGGER.error("The track-part-duration for the last round does not exist!");
+			LOGGER.error("Driver#" + trackPart.getId() + " The track-part-duration for the last round does not exist!");
 			return 0.0;
 		}
-		DurationFromNextPartMessage initialDuration = nextTrackPartDurations.get(1);
+		DurationFromNextPartMessage initialDuration = nextTrackPartDurations.get(0);
 		DurationFromNextPartMessage calculationDuration = nextTrackPartDurations.get(roundCounter - 1);
 		double result = (100 - ((100.0 / initialDuration.getDuration()) * calculationDuration.getDuration())) / 100.0;
-		LOGGER.info("CALCULATE SPEEDUP-FACTOR = " + result + " based on TRACK-PART-DURATIONS (initial-duration=" + initialDuration.getDuration() + ", last-duration="
-				+ calculationDuration.getDuration() + ")");
+		LOGGER.info("Driver#" + trackPart.getId() + " CALCULATE SPEEDUP-FACTOR = " + result + " based on TRACK-PART-DURATIONS (initial-duration=" + initialDuration.getDuration()
+				+ ", last-duration=" + calculationDuration.getDuration() + ")");
 		return result;
 	}
 
@@ -85,8 +91,8 @@ public class StraightDrivingActor extends AbstractTrackPartDrivingActor {
 		PenaltyMessage calculationPenalty = penalties.get(roundCounter - 1);
 		int penaltyAmount = getAmountOfPenaltiesLastRounds();
 		double result = ((100 - ((100.0 / calculationPenalty.getActualSpeed()) * calculationPenalty.getSpeedLimit())) / 100.0) * penaltyAmount;
-		LOGGER.info("CALCULATE SPEEDUP-FACTOR = " + result + " based on PENALTY (max-allowed-speed=" + calculationPenalty.getSpeedLimit() + ", our-speed="
-				+ calculationPenalty.getActualSpeed() + ", amount-penalties=" + penaltyAmount + ")");
+		LOGGER.info("Driver#" + trackPart.getId() + " CALCULATE SPEEDUP-FACTOR = " + result + " based on PENALTY (max-allowed-speed=" + calculationPenalty.getSpeedLimit()
+				+ ", our-speed=" + calculationPenalty.getActualSpeed() + ", amount-penalties=" + penaltyAmount + ")");
 		return result;
 	}
 
@@ -112,8 +118,11 @@ public class StraightDrivingActor extends AbstractTrackPartDrivingActor {
 				increaseTimeUntilBrake();
 			}
 		} else if (speedupPhaseFinished) {
-			if (wereWeTooFastLastRound())
+			if (wereWeTooFastLastRound()) {
 				decreaseTimeUntilBrake();
+			} else if (wereWeTooSlowLastRound()) {
+				increaseTimeUntilBrake();
+			}
 		}
 		setPower(currentPower);
 		scheduleBrake(timeUntilBrake, currentBrakeDownPower);
@@ -129,6 +138,10 @@ public class StraightDrivingActor extends AbstractTrackPartDrivingActor {
 		return didWeHadPenaltyLastRound() || calcSpeedupFactorByTrackDurations() > 0.0;
 	}
 
+	private boolean wereWeTooSlowLastRound() {
+		return calcSpeedupFactorByTrackDurations() < 0.1;
+	}
+
 	private boolean canWeReduceBrakeDownPower() {
 		return currentBrakeDownPower.getValue() > MINIMAL_BRAKE_DOWN_POWER;
 	}
@@ -142,21 +155,26 @@ public class StraightDrivingActor extends AbstractTrackPartDrivingActor {
 		}
 		int calculatedBrakeDownPower = currentBrakeDownPower.getValue() + (int) (currentBrakeDownPower.getValue() * -factor);
 		currentBrakeDownPower = new Power(Math.max(calculatedBrakeDownPower, MINIMAL_BRAKE_DOWN_POWER));
+		LOGGER.info("Driver#" + trackPart.getId() + " calculated brake-down-power=" + currentBrakeDownPower + " (based on factor=" + factor + ")");
 	}
 
 	private void increaseTimeUntilBrake() {
-		timeUtilBrakeDownFactor = timeUtilBrakeDownFactor + SPEEDUP_DURATION_STEPS;
+		if (iAmSpeedingUp)
+			timeUntilBrakeDownFactor = timeUntilBrakeDownFactor + SPEEDUP_DURATION_INCREASE_STEPS;
+		else
+			timeUntilBrakeDownFactor = timeUntilBrakeDownFactor + DURATION_INCREASE_STEPS;
 		calculateTimeUntilBrake();
 	}
 
 	private void decreaseTimeUntilBrake() {
-		timeUtilBrakeDownFactor = timeUtilBrakeDownFactor - SPEEDUP_DURATION_STEPS;
+		timeUntilBrakeDownFactor = timeUntilBrakeDownFactor - SPEEDUP_DURATION_DECREASE_STEPS;
 		calculateTimeUntilBrake();
 	}
 
 	private void calculateTimeUntilBrake() {
-		timeUntilBrake = (long) (trackPart.getDuration() * timeUtilBrakeDownFactor);
-		LOGGER.info("Calculated time until brake: " + timeUntilBrake);
+		timeUntilBrake = (long) (trackPart.getDuration() * timeUntilBrakeDownFactor);
+		LOGGER.info("Driver#" + trackPart.getId() + " Calculated time until brake: " + timeUntilBrake + " (based on duration=" + trackPart.getDuration() + ", timeUntilBrakeFactor="
+				+ timeUntilBrakeDownFactor + ")");
 	}
 
 	private boolean didWeHadPenaltyLastRound() {

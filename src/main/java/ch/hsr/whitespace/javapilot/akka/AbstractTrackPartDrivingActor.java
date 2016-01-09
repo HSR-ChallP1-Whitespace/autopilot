@@ -71,6 +71,7 @@ public abstract class AbstractTrackPartDrivingActor extends UntypedActor {
 	}
 
 	protected void enterTrackPart(TrackPartEnteredMessage message) {
+		LOGGER.info("Driver#" + trackPart.getId() + " got TrackPartEnteredMessage");
 		if (!isValidDirection(message)) {
 			handleLostPosition(message);
 			return;
@@ -95,6 +96,7 @@ public abstract class AbstractTrackPartDrivingActor extends UntypedActor {
 	}
 
 	protected void leaveTrackPart(DirectionChangedMessage message) {
+		LOGGER.info("Driver#" + trackPart.getId() + " leave TrackPart now");
 		trackPartEntered = false;
 		stopDriving();
 		enterNextTrackPart(message);
@@ -116,7 +118,8 @@ public abstract class AbstractTrackPartDrivingActor extends UntypedActor {
 	}
 
 	private void handleLostPosition(TrackPartEnteredMessage message) {
-		LOGGER.warn("Direction is not correct. Lost position! (Expected '" + trackPart.getDirection() + "' part now, but detected '" + message.getTrackPartDirection() + "'.)");
+		LOGGER.warn("Driver#" + trackPart.getId() + " Direction is not correct. Lost position! (Expected '" + trackPart.getDirection() + "' part now, but detected '"
+				+ message.getTrackPartDirection() + "'.)");
 		resetPower();
 		sendLostPositionMessage(message);
 	}
@@ -152,6 +155,8 @@ public abstract class AbstractTrackPartDrivingActor extends UntypedActor {
 		if (trackPartEntryTime != 0) {
 			trackPart.setStartTime(trackPartEntryTime);
 			trackPart.setEndTime(currentTimeStamp);
+			LOGGER.info("Driver#" + trackPart.getId() + " updated time-stamps (start=" + trackPart.getStartTime() + ", end=" + trackPart.getEndTime() + ", duration="
+					+ trackPart.getDuration() + ")");
 		}
 	}
 
