@@ -152,12 +152,16 @@ public abstract class AbstractTrackPartDrivingActor extends UntypedActor {
 	}
 
 	private void updateTrackPartTimestamps(long currentTimeStamp) {
-		if (trackPartEntryTime != 0) {
-			trackPart.setStartTime(trackPartEntryTime);
-			trackPart.setEndTime(currentTimeStamp);
-			LOGGER.info("Driver#" + trackPart.getId() + " updated time-stamps (start=" + trackPart.getStartTime() + ", end=" + trackPart.getEndTime() + ", duration="
-					+ trackPart.getDuration() + ")");
+		if (trackPartEntryTime == 0)
+			return;
+		if (new Long(trackPartEntryTime).equals(new Long(currentTimeStamp))) {
+			LOGGER.error("Something weird here, track-duration cannot be zero...");
+			return;
 		}
+		trackPart.setStartTime(trackPartEntryTime);
+		trackPart.setEndTime(currentTimeStamp);
+		LOGGER.info("Driver#" + trackPart.getId() + " updated time-stamps (start=" + trackPart.getStartTime() + ", end=" + trackPart.getEndTime() + ", duration="
+				+ trackPart.getDuration() + ")");
 	}
 
 	private void tellSpeedupFactorToPreviousTrackPart(long currentDuration) {
