@@ -23,7 +23,7 @@ public class StraightDrivingActor extends AbstractTrackPartDrivingActor {
 	private final Logger LOGGER = LoggerFactory.getLogger(StraightDrivingActor.class);
 
 	private static final int MINIMAL_BRAKE_DOWN_POWER = 30;
-	private static final double SPEEDUP_DURATION_INCREASE_STEPS = 0.05;
+	private static final double SPEEDUP_DURATION_INCREASE_STEPS = 0.1;
 	private static final double SPEEDUP_DURATION_DECREASE_STEPS = 0.1;
 
 	private static final double DURATION_INCREASE_STEPS = 0.01;
@@ -117,7 +117,7 @@ public class StraightDrivingActor extends AbstractTrackPartDrivingActor {
 		} else if (speedupPhaseFinished) {
 			if (wereWeTooFastLastRound()) {
 				decreaseTimeUntilBrake();
-			} else if (wereWeTooSlowLastRound()) {
+			} else if (calcSpeedupFactorByTrackDurations() < -0.1) {
 				increaseTimeUntilBrake();
 			}
 		}
@@ -133,10 +133,6 @@ public class StraightDrivingActor extends AbstractTrackPartDrivingActor {
 
 	private boolean wereWeTooFastLastRound() {
 		return didWeHadPenaltyLastRound() || calcSpeedupFactorByTrackDurations() > 0.0;
-	}
-
-	private boolean wereWeTooSlowLastRound() {
-		return calcSpeedupFactorByTrackDurations() < 0.1;
 	}
 
 	private boolean canWeReduceBrakeDownPower() {
