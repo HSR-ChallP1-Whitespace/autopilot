@@ -2,6 +2,7 @@ package ch.hsr.whitespace.javapilot.akka;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.TreeMap;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -30,7 +31,7 @@ public class StraightDrivingActor extends AbstractTrackPartDrivingActor {
 	private Power currentBrakeDownPower;
 	private long timeUntilBrake;
 	private Map<Integer, PenaltyMessage> penalties;
-	private Map<Integer, DurationFromNextPartMessage> nextTrackPartDurations;
+	private TreeMap<Integer, DurationFromNextPartMessage> nextTrackPartDurations;
 	private double timeUntilBrakeDownFactor = 0.1;
 	private boolean speedupPhaseFinished = false;
 
@@ -42,7 +43,7 @@ public class StraightDrivingActor extends AbstractTrackPartDrivingActor {
 		super(pilot, trackPart, currentPower);
 		this.currentBrakeDownPower = new Power(currentPower);
 		this.penalties = new HashMap<>();
-		this.nextTrackPartDurations = new HashMap<>();
+		this.nextTrackPartDurations = new TreeMap<>();
 	}
 
 	@Override
@@ -71,15 +72,11 @@ public class StraightDrivingActor extends AbstractTrackPartDrivingActor {
 			LOGGER.error("Driver#" + trackPart.getId() + " The initial track-part-duration does not exist!");
 			return 0.0;
 		}
-		if (!nextTrackPartDurations.containsKey(roundCounter - 1)) {
-			LOGGER.error("Driver#" + trackPart.getId() + " The track-part-duration for the last round does not exist!");
-			return 0.0;
-		}
 		DurationFromNextPartMessage initialDuration = nextTrackPartDurations.get(0);
-		DurationFromNextPartMessage calculationDuration = nextTrackPartDurations.get(roundCounter - 1);
+		DurationFromNextPartMessage calculationDuration = nextTrackPartDurations.get(nextTrackPartDurations.lastEntry().getKey());
 		double result = (100 - ((100.0 / initialDuration.getDuration()) * calculationDuration.getDuration())) / 100.0;
 		LOGGER.info("Driver#" + trackPart.getId() + " CALCULATE SPEEDUP-FACTOR = " + result + " based on TRACK-PART-DURATIONS (initial-duration=" + initialDuration.getDuration()
-				+ ", last-duration=" + calculationDuration.getDuration() + ")");
+				+ ", last-duration=" + calculationDuration.getDuration() + " (last-available-round=" + nextTrackPartDurations.lastEntry().getKey() + "))");
 		return result;
 	}
 
