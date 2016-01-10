@@ -28,6 +28,8 @@ public class SpeedupOneAfterOne extends AbstractSpeedupOrderStrategy {
 	private void speedupNextTrackPart() {
 		if (trackPartsIterator.hasNext())
 			speedupTrackPart(trackPartsIterator.next());
+		else
+			strategyFinished();
 	}
 
 }

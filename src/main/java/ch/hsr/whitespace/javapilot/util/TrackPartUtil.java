@@ -23,4 +23,8 @@ public class TrackPartUtil {
 		}).collect(Collectors.toList());
 	}
 
+	public static List<TrackPart> getCurveParts(Collection<TrackPart> trackParts) {
+		return trackParts.stream().filter(t -> t.getDirection() != Direction.STRAIGHT).collect(Collectors.toList());
+	}
+
 }

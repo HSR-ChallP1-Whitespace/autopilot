@@ -49,8 +49,11 @@ public class DrivingCoordinatorActor extends UntypedActor {
 	private boolean lostPosition = false;
 	private int initialPower;
 	private List<TrackPart> straights;
+	private List<TrackPart> curves;
 	private List<LostPositionMessage> lostMessages;
 	private SpeedupOrderStrategy speedupStrategy;
+	private boolean straightSpeedupFinished = false;
+	private boolean curveSpeedupFinished = false;
 
 	public static Props props(ActorRef pilot, int initialPower) {
 		return Props.create(DrivingCoordinatorActor.class, () -> new DrivingCoordinatorActor(pilot, initialPower));
@@ -71,7 +74,7 @@ public class DrivingCoordinatorActor extends UntypedActor {
 			initializeTrackPartMap(((InitializePositionDetection) message).getTrackParts());
 			initializeBarriers();
 			trackPartActors.get(1).tell(new TrackPartEnteredMessage(0, trackParts.get(1).getDirection()), getSelf());
-			startSpeedingUp();
+			startSpeedingUpStraightParts();
 		} else if (message instanceof VelocityMessage) {
 			handleVelocityMessage((VelocityMessage) message);
 		} else if (message instanceof PrintTrackPositionMessage) {
@@ -85,6 +88,15 @@ public class DrivingCoordinatorActor extends UntypedActor {
 
 	public void speedupTrackPartById(int trackPartId) {
 		trackPartActors.get(trackPartId).tell(new SpeedupMessage(true), getSelf());
+	}
+
+	public void speedupStrategyFinishedPhase() {
+		if (!straightSpeedupFinished) {
+			straightSpeedupFinished = true;
+			startSpeedingUpCurveParts();
+		} else if (!curveSpeedupFinished) {
+			curveSpeedupFinished = true;
+		}
 	}
 
 	private void handleLostPosition(LostPositionMessage message) {
@@ -124,9 +136,15 @@ public class DrivingCoordinatorActor extends UntypedActor {
 		return false;
 	}
 
-	private void startSpeedingUp() {
+	private void startSpeedingUpStraightParts() {
 		this.straights = TrackPartUtil.getStraightPartsByDuration(trackParts.values());
 		speedupStrategy = new SpeedupOrderStrategyFactory(straights, this).createStrategy(SPEEDUP_STRATEGY);
+		speedupStrategy.startSpeedup();
+	}
+
+	private void startSpeedingUpCurveParts() {
+		this.curves = TrackPartUtil.getCurveParts(trackParts.values());
+		speedupStrategy = new SpeedupOrderStrategyFactory(curves, this).createStrategy(SPEEDUP_STRATEGY);
 		speedupStrategy.startSpeedup();
 	}
 

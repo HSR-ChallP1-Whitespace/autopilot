@@ -7,6 +7,8 @@ import ch.hsr.whitespace.javapilot.model.track.TrackPart;
 
 public class SpeedupAllTogether extends AbstractSpeedupOrderStrategy {
 
+	private int finishedCounter = 0;
+
 	public SpeedupAllTogether(List<TrackPart> trackParts, DrivingCoordinatorActor drivingCoordinator) {
 		super(trackParts, drivingCoordinator);
 	}
@@ -21,7 +23,9 @@ public class SpeedupAllTogether extends AbstractSpeedupOrderStrategy {
 
 	@Override
 	public void speedupFinished(TrackPart trackPart) {
-		// nothing to do in this case
+		finishedCounter++;
+		if (finishedCounter >= this.trackParts.size())
+			strategyFinished();
 	}
 
 }

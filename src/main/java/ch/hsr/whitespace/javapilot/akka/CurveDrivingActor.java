@@ -5,6 +5,7 @@ import java.util.concurrent.TimeUnit;
 import akka.actor.ActorRef;
 import akka.actor.Props;
 import ch.hsr.whitespace.javapilot.akka.messages.TrackPartEnteredMessage;
+import ch.hsr.whitespace.javapilot.model.Power;
 import ch.hsr.whitespace.javapilot.model.track.Direction;
 import ch.hsr.whitespace.javapilot.model.track.TrackPart;
 import scala.concurrent.duration.Duration;
@@ -13,6 +14,8 @@ public class CurveDrivingActor extends AbstractTrackPartDrivingActor {
 
 	// 0.5 = ca. middle of curve (based on last time in curve)
 	private static final double START_NEXT_STRAIGHT_TIME_PERCENTAGE = 0.5;
+
+	private static final int CURVE_POWER_INCREASE = 5;
 
 	public static Props props(ActorRef pilot, TrackPart trackPart, int currentPower) {
 		return Props.create(CurveDrivingActor.class, () -> new CurveDrivingActor(pilot, trackPart, currentPower));
@@ -29,6 +32,8 @@ public class CurveDrivingActor extends AbstractTrackPartDrivingActor {
 
 	@Override
 	protected void evaluateAndSetNewPower() {
+		if (iAmSpeedingUp)
+			currentPower = new Power(currentPower.getValue() + CURVE_POWER_INCREASE);
 		setPower(currentPower);
 	}
 

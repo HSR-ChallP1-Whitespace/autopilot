@@ -22,11 +22,13 @@ public class StraightDrivingActor extends AbstractTrackPartDrivingActor {
 
 	private final Logger LOGGER = LoggerFactory.getLogger(StraightDrivingActor.class);
 
+	private static final int MAXIMAL_ROUNDS_TO_SPEEDUP = 10;
+
 	private static final int MINIMAL_BRAKE_DOWN_POWER = 50;
 	private static final double SPEEDUP_DURATION_INCREASE_STEPS = 0.1;
 	private static final double SPEEDUP_DURATION_DECREASE_STEPS = 0.1;
 
-	private static final double DURATION_INCREASE_STEPS = 0.01;
+	private static final double DURATION_INCREASE_STEPS = 0.1;
 	private static final int BRAKE_DOWN_POWER_FACTOR = 2;
 
 	private Power currentBrakeDownPower;
@@ -116,6 +118,9 @@ public class StraightDrivingActor extends AbstractTrackPartDrivingActor {
 			} else {
 				increaseTimeUntilBrake();
 			}
+			if (roundCounter >= MAXIMAL_ROUNDS_TO_SPEEDUP) {
+				stopSpeedup();
+			}
 		} else if (speedupPhaseFinished) {
 			if (wereWeTooFastLastRound()) {
 				decreaseTimeUntilBrake();
@@ -134,7 +139,10 @@ public class StraightDrivingActor extends AbstractTrackPartDrivingActor {
 	}
 
 	private boolean wereWeTooFastLastRound() {
-		return didWeHadPenaltyLastRound() || calcSpeedupFactorByTrackDurations() > 0.0;
+		if (iAmSpeedingUp)
+			return didWeHadPenaltyLastRound() || calcSpeedupFactorByTrackDurations() > 0.0;
+		else
+			return didWeHadPenaltyLastRound();
 	}
 
 	private boolean canWeReduceBrakeDownPower() {
@@ -167,7 +175,7 @@ public class StraightDrivingActor extends AbstractTrackPartDrivingActor {
 	}
 
 	private void calculateTimeUntilBrake() {
-		if (lastTrackPartDuration == 0 || trackPart.getDuration() > lastTrackPartDuration)
+		if (lastTrackPartDuration == 0 || trackPart.getDuration() < lastTrackPartDuration)
 			lastTrackPartDuration = trackPart.getDuration();
 		timeUntilBrake = (long) (lastTrackPartDuration * timeUntilBrakeDownFactor);
 		LOGGER.info("Driver#" + trackPart.getId() + " Calculated time until brake: " + timeUntilBrake + " (based on duration=" + trackPart.getDuration() + ", timeUntilBrakeFactor="

@@ -20,4 +20,8 @@ public abstract class AbstractSpeedupOrderStrategy implements SpeedupOrderStrate
 		drivingCoordinator.speedupTrackPartById(trackPart.getId());
 	}
 
+	protected void strategyFinished() {
+		drivingCoordinator.speedupStrategyFinishedPhase();
+	}
+
 }
