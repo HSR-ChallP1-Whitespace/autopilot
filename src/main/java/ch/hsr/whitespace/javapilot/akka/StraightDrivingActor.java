@@ -22,11 +22,12 @@ public class StraightDrivingActor extends AbstractTrackPartDrivingActor {
 
 	private final Logger LOGGER = LoggerFactory.getLogger(StraightDrivingActor.class);
 
-	private static final int MINIMAL_BRAKE_DOWN_POWER = 30;
+	private static final int MINIMAL_BRAKE_DOWN_POWER = 50;
 	private static final double SPEEDUP_DURATION_INCREASE_STEPS = 0.1;
 	private static final double SPEEDUP_DURATION_DECREASE_STEPS = 0.1;
 
 	private static final double DURATION_INCREASE_STEPS = 0.01;
+	private static final int BRAKE_DOWN_POWER_FACTOR = 2;
 
 	private Power currentBrakeDownPower;
 	private long timeUntilBrake;
@@ -34,6 +35,7 @@ public class StraightDrivingActor extends AbstractTrackPartDrivingActor {
 	private TreeMap<Integer, DurationFromNextPartMessage> nextTrackPartDurations;
 	private double timeUntilBrakeDownFactor = 0.1;
 	private boolean speedupPhaseFinished = false;
+	private long lastTrackPartDuration = 0;
 
 	public static Props props(ActorRef pilot, TrackPart trackPart, int currentPower) {
 		return Props.create(StraightDrivingActor.class, () -> new StraightDrivingActor(pilot, trackPart, currentPower));
@@ -146,7 +148,7 @@ public class StraightDrivingActor extends AbstractTrackPartDrivingActor {
 		} else {
 			factor = calcSpeedupFactorByTrackDurations();
 		}
-		int calculatedBrakeDownPower = currentBrakeDownPower.getValue() + (int) (currentBrakeDownPower.getValue() * -factor);
+		int calculatedBrakeDownPower = currentBrakeDownPower.getValue() + (int) (currentBrakeDownPower.getValue() * -factor * BRAKE_DOWN_POWER_FACTOR);
 		currentBrakeDownPower = new Power(Math.max(calculatedBrakeDownPower, MINIMAL_BRAKE_DOWN_POWER));
 		LOGGER.info("Driver#" + trackPart.getId() + " calculated brake-down-power=" + currentBrakeDownPower + " (based on factor=" + factor + ")");
 	}
@@ -165,7 +167,9 @@ public class StraightDrivingActor extends AbstractTrackPartDrivingActor {
 	}
 
 	private void calculateTimeUntilBrake() {
-		timeUntilBrake = (long) (trackPart.getDuration() * timeUntilBrakeDownFactor);
+		if (lastTrackPartDuration == 0 || trackPart.getDuration() > lastTrackPartDuration)
+			lastTrackPartDuration = trackPart.getDuration();
+		timeUntilBrake = (long) (lastTrackPartDuration * timeUntilBrakeDownFactor);
 		LOGGER.info("Driver#" + trackPart.getId() + " Calculated time until brake: " + timeUntilBrake + " (based on duration=" + trackPart.getDuration() + ", timeUntilBrakeFactor="
 				+ timeUntilBrakeDownFactor + ")");
 	}
